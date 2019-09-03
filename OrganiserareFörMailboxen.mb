@@ -27,9 +27,18 @@ declare sub generateSwerefNrOnFa
 Global startTime,iprogressRange,iprogress as integer
 ,debugg as logical
 
+'todo: split into separate modules for naturReservat and Sweref count
+'todo: find bug whom ressult in faulty sorting, does not ressult in errorhandling
+'Todo: change table names to Follow namingconvention mentioned at https://gis.stackexchange.com/a/231721
+
+'Todo: Compensate for obeus duplicates
+'	? Mark dupes so they're seperatly sorted, as mails
+
+How to Find Duplicate Files with PowerShell or Netwrix Auditor
+
 
 Sub Main()
-	debugg = false
+	debugg = true
 	startTime = timer()
 	iprogressRange = 11
 	iprogress = 0	
@@ -39,9 +48,9 @@ ProgressBar "Arbetar... dags att hämta Te"
 Range iProgressRange
 
 exit sub
-	printErrorNr:
-	call increment(iProgress,iProgressRange,starttime) 'err()
-		end program
+	'printErrorNr:
+	'call increment(iProgress,iProgressRange,starttime) 'err()
+	'	end program
 End Sub
 
 sub progressor()
@@ -49,15 +58,15 @@ sub progressor()
 		case 1
 			call localtableOpener
 		case 2
-			call GenerateRessultMailsNoObj '@RessultMailsNoObj OutlookExport
+			call GenerateRessultMailsNoObj 'tbl_RessultMailsNoObj OutlookExport
 		case 3
 			call CorrectGenObjFaWithSweref 'korrigera GenerateRessultMailsNoObj där det saknad fastighetMedSweref GenObjFaWithSweref
-			call GenerateMailsWithFaObjects 'adds faIndex @MailsWithFaObjects from RessultMailsNoObj, FaNoSkift  and fastighet <> "" 
-			call generateSwerefNrOnFa
+			call GenerateMailsWithFaObjects 'adds faIndex tbl_MailsWithFaObjects from tbl_RessultMailsNoObj, tbl_FaNoSkift  and tbl_fastighet <> "" 
+			call generateSwerefNrOnFa 'tbl_SwerefNrOnFa
 		case 4
-			call generateGkFasIndex '@GkFasIndex MailsWithFaObjects,NatMedFas
+			call generateGkFasIndex 'tbl_GkFasIndex MailsWithFaObjects,NatMedFas
 		case 5
-			call generateÄrDisNrSwerBet 'nrKvFlaggot och distrikt @ÄrDisNrSwerBet  from MailsWithFaObjects, distriktsindelning
+			call generateÄrDisNrSwerBet 'nrKvFlaggot och distrikt tbl_ÄrDisNrSwerBet  from tbl_MailsWithFaObjects, tbl_distriktsindelning
 		case 6
 			call UpdateRessultMailsNoObj 
 							'RessultMailsNoObj 
