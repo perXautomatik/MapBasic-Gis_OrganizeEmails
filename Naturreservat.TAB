@@ -1,0 +1,38 @@
+!table
+!version 450
+!charset WindowsLatin1
+
+Definition Table
+  Type NATIVE Charset "WindowsLatin1"
+  Fields 26
+    FNR_FDS Char (9) Index 2 ;
+    FNR Integer ;
+    KIR Char (40) ;
+    OBJEKT_ID Char (36) ;
+    EXTERNID Char (64) ;
+    DETALJTYP Char (10) ;
+    KOMMUNKOD Char (4) ;
+    KOMMUNNAMN Char (16) ;
+    TRAKT Char (40) ;
+    BLOCKENHET Char (9) ;
+    OMRNR Decimal (3, 0) ;
+    FASTIGHET Char (54) ;
+    YTKVAL Decimal (2, 0) ;
+    ADAT Char (16) ;
+    OMRTYP Char (30) ;
+    Kart_Skikt Char (26) ;
+    Namn Char (50) ;
+    ID Char (19) Index 1 ;
+    Klassning Float ;
+    Klassningsförklaring Char (72) ;
+    Bedömning Char (254) ;
+    Motivering Char (254) ;
+    Lag Char (42) ;
+    Länk Char (244) ;
+    Kontaktperson Char (28) ;
+    Senast_ändrad Char (8) ;
+begin_metadata
+"\IsReadOnly" = "FALSE"
+"\MapInfo" = ""
+"\MapInfo\TableID" = "fd005c58-7054-4e38-82d0-b27064d22d6a"
+end_metadata

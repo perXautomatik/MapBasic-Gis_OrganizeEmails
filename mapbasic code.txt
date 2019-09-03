@@ -1,0 +1,13 @@
+Open Table "H:\mina grejer\att g�ra\till mig sj�lv\organiserarF�rMailboxen\tomSweref.TAB" Interactive 
+Register Table "H:\mina grejer\att g�ra\till mig sj�lv\organiserarF�rMailboxen\R�Text�rendeNr.txt" TYPE ASCII Delimiter 9 Charset "WindowsLatin1" Into "H:\mina grejer\att g�ra\till mig sj�lv\organiserarF�rMailboxen\R�Text�rendeNr.TAB" 
+Open Table "H:\mina grejer\att g�ra\till mig sj�lv\organiserarF�rMailboxen\R�Text�rendeNr.TAB" Interactive 
+Open Table "G:\sbf\Livsmilj�\Milj�- och h�lsoskydd\Vatten\Avlopp\Klart Vatten\Fastigheter\GIS\Fastigheter_Sweref.TAB" Interactive 
+Open Table "H:\mina grejer\att g�ra\till mig sj�lv\organiserarF�rMailboxen\Naturreservat.tab" Interactive 
+Open Table "H:\mina grejer\att g�ra\till mig sj�lv\organiserarF�rMailboxen\RessultatTabell.tab" Interactive 
+Open Table "H:\mina grejer\att g�ra\till mig sj�lv\organiserarF�rMailboxen\distriktsindelning.TAB" Interactive 
+Insert Into tomSweref ( COL1, COL2, COL3, COL4, COL5, COL6, COL7, COL8, COL9, COL10) Select COL1, COL2, COL3, COL4, COL5, COL6, COL7, COL8, COL9, COL10 From Fastigheter_Sweref DropIndex Auto 
+Add Column "tomSweref" (distrikt Char (40))From distriktsindelning Set To distrikt Where contains Insert Into RessultatTabell ( COL1) 
+Select COL1 From R�Text�rendeNr DropIndex Auto Add Column "tomSweref" (TempColumn1077 )From Naturreservat Set To Klassning Where contains 
+Add Column "RessultatTabell" (distrikt Char (40))From tomSweref Set To distrikt Where COL1 = COL3  Dynamic 
+Add Column "RessultatTabell" (TempColumn1077 Integer)From tomSweref Set To TempColumn1077 Where COL1 = COL3  Dynamic 
+Browse * From RessultatTabell
