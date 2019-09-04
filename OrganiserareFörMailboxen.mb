@@ -2,97 +2,105 @@ Include "MapBasic.def"
 include "C:\Users\crbk01\OneDrive - Region Gotland\Till Github\Mapinfo\CommonLib\commonLib1.def"
 
 Declare Sub Main
-Declare Sub GenerateRessultMailsNoObj
 
-declare sub generateGkFasIndex
-declare sub generateÄrDisNrSwerBet 
-declare sub printToFile(byVal tableName as string,byVal pathString as string)
-declare sub presentation()
-declare sub localtableOpener
-declare sub GenerateMailsWithFaObjects
+
+declare sub Add_rowid(ByVal tableName as string)
 declare sub cleanup
 declare sub groupBy(byVal tableName as string, byVal kolumnNamn as string)
-declare sub Add_rowid(ByVal tableName as string)
-declare sub tableColumnAsArray(byVal tableName as string, byVal kolumnNamn as string,array() as integer)
-declare sub progressor()
 declare sub LegacyGenerateRessultMailsNoObj
-declare sub genereraNaturskyddslager
-declare sub UpdateRessultMailsNoObj 
-declare sub generateResTabWithObj
-declare sub generateToExport	
-declare sub CorrectGenObjFaWithSweref
-declare sub generateSwerefNrOnFa
+declare sub printToFile(byVal tableName as string,byVal pathString as string)
+declare sub progressor()
+declare sub tableColumnAsArray(byVal tableName as string, byVal kolumnNamn as string,array() as integer)
 
 
-Global startTime,iprogressRange,iprogress as integer
-,debugg as logical
+declare sub noParmAltResMailsNoObj 
+declare sub noPa3CorGenObjFaWithSweref
+declare sub noPa6GenGkFasInx
+declare sub noPa4GenMailsWiFaObjs
+declare sub noParmGenNaturskyd
+Declare Sub noPa2GenResMailsNoObj
+declare sub noParmGenResWithObj
+declare sub noPa5GenSwerefNrOnFa
+declare sub noParmGenToExport	
+declare sub noParmGenÄrDisNrSwerBet 
+declare sub noPa1LocaltableOpener
+declare sub noParmPresentation()
+
+
+
+Global iStartTime,iprogressRange,iprogress as integer
+,lDebugg as logical
+,tablePath as string
 
 'todo: split into separate modules for naturReservat and Sweref count
 'todo: find bug whom ressult in faulty sorting, does not ressult in errorhandling
-'Todo: change table names to Follow namingconvention mentioned at https://gis.stackexchange.com/a/231721
-
 'Todo: Compensate for obeus duplicates
 '	? Mark dupes so they're seperatly sorted, as mails
 
-How to Find Duplicate Files with PowerShell or Netwrix Auditor
-
+'Todo: change table names to Follow namingconvention mentioned at https://gis.stackexchange.com/a/231721
+'change: Hungarian~ notation, i for integer, s for string, x for double f for float tbl for table
+'camelCase
+'noParm prefix of methods being run in the progressbar.
+'important to not make methodnamesTo long
+'should methods which alters tables have a certain naming convention? for example (alt)tableName what about multitableAlteration? mAlt?
+'should methods that generate tables be called something? for example (gen)tableName, what about multitableGeneration? mGen?
+'that a table has geoData or not.... wObj/nObj? as sufix
+'old convention with @ seemed bit to confusing
+'should i use Gen as a sufix rather for the sake of allowing reverseSorting
+'executionOrder in methodnamesOfNoParm? example noPa1,noPa2,noPa3
 
 Sub Main()
-	debugg = true
-	startTime = timer()
+	lDebugg = true
+	iStartTime = timer()
 	iprogressRange = 11
 	iprogress = 0	
+	tablePath = "G:\sbf\Livsmiljö\Gemensamt\mapbasic program projekt\skikt\Vanliga Tabfiler\"
 ProgressBar "Arbetar... dags att hämta Te"
 	     Calling progressor
-	'call progressor
 Range iProgressRange
 
-exit sub
-	'printErrorNr:
-	'call increment(iProgress,iProgressRange,starttime) 'err()
-	'	end program
 End Sub
 
 sub progressor()
 	do case iProgress
 		case 1
-			call localtableOpener
+			call noPa1LocaltableOpener
 		case 2
-			call GenerateRessultMailsNoObj 'tbl_RessultMailsNoObj OutlookExport
+			call noPa2GenResMailsNoObj 'tbl_RessultMailsNoObj OutlookExport
 		case 3
-			call CorrectGenObjFaWithSweref 'korrigera GenerateRessultMailsNoObj där det saknad fastighetMedSweref GenObjFaWithSweref
-			call GenerateMailsWithFaObjects 'adds faIndex tbl_MailsWithFaObjects from tbl_RessultMailsNoObj, tbl_FaNoSkift  and tbl_fastighet <> "" 
-			call generateSwerefNrOnFa 'tbl_SwerefNrOnFa
+			call noPa3CorGenObjFaWithSweref 'korrigera noPa2GenResMailsNoObj där det saknad fastighetMedSweref GenObjFaWithSweref
+			call noPa4GenMailsWiFaObjs 'adds faIndex tbl_MailsWithFaObjects from tbl_RessultMailsNoObj, tbl_FaNoSkift  and tbl_fastighet <> "" 
+			call noPa5GenSwerefNrOnFa 'tbl_SwerefNrOnFa
 		case 4
-			call generateGkFasIndex 'tbl_GkFasIndex MailsWithFaObjects,NatMedFas
+			call noPa6GenGkFasInx 'tbl_GkFasIndex MailsWithFaObjects,NatMedFas
 		case 5
-			call generateÄrDisNrSwerBet 'nrKvFlaggot och distrikt tbl_ÄrDisNrSwerBet  from tbl_MailsWithFaObjects, tbl_distriktsindelning
+			call noParmGenÄrDisNrSwerBet 'nrKvFlaggot och distrikt tbl_ÄrDisNrSwerBet  from tbl_MailsWithFaObjects, tbl_distriktsindelning
 		case 6
-			call UpdateRessultMailsNoObj 
+			call noParmAltResMailsNoObj 
 							'RessultMailsNoObj 
 								'kvFlaggorIsocken,distrikt ÄrDisNrSwerBet antalSweref
 								'NaturStatus GkFasIndex bedömning
 								'anteckning fastigheter_sweref 				
 		case 7
-			call generateResTabWithObj 'ResTabWithObj
+			call noParmGenResWithObj 'ResTabWithObj
 		case 8
-			call genereraNaturskyddslager '@Natur... GkFasIndex 
+			call noParmGenNaturskyd '@Natur... GkFasIndex 
 		case 9
-			call presentation	
+			call noParmPresentation	
 		case 10
-			call generateToExport '@ToExport RessultMailsNoObj
+			call noParmGenToExport '@ToExport RessultMailsNoObj
 		case 11
-			call cleanUp
+			call noParmCleanUp
 	end case
 			
 	call increment(iProgress,iProgressRange,starttime)
 end sub
 
-sub generateSwerefNrOnFa
+sub noPa5GenSwerefNrOnFa
 	Select MailsWithFaObjects.EntryID, Fastigheter_Sweref.Anteckning from Fastigheter_Sweref, MailsWithFaObjects where Fastigheter_Sweref.obj Within MailsWithFaObjects.obj into SwerefNrOnFa
 end sub
 
-sub CorrectGenObjFaWithSweref
+sub noPa3CorGenObjFaWithSweref
 		
 	select * from RessultMailsNoObj 
 		where RessultMailsNoObj.fastighet = ""
@@ -102,7 +110,7 @@ sub CorrectGenObjFaWithSweref
 
 End Sub
 
-Sub GenerateRessultMailsNoObj
+Sub noPa2GenResMailsNoObj
 	Dim printMessage,tempPath,tempstring As String
 	,nrOfSlices,I,RowTwoLenght as integer
 	,tempObject as Object
@@ -119,7 +127,7 @@ Sub GenerateRessultMailsNoObj
 	commit table RessultMailsNoObj
 End Sub
 
-sub generateResTabWithObj
+sub noParmGenResWithObj
 	Select RessultMailsNoObj.ärendenr,
 		RessultMailsNoObj.anteckning, 
 		RessultMailsNoObj.kvFlaggorIsocken,
@@ -135,7 +143,7 @@ sub generateResTabWithObj
 	call görTillBasTabell("ResTabWithObj")
 end sub
 
-sub UpdateRessultMailsNoObj 
+sub noParmAltResMailsNoObj 
 	Add Column "RessultMailsNoObj" (kvFlaggorIsocken)From ÄrDisNrSwerBet Set To antalSweref Where COL2 = COL1
 	Add Column "RessultMailsNoObj" (distrikt)From ÄrDisNrSwerBet Set To distrikt Where COL2 = COL1 
 	Add Column "RessultMailsNoObj" (NaturStatus )From GkFasIndex Set To bedömning Where COL2 = COL1 
@@ -143,7 +151,7 @@ sub UpdateRessultMailsNoObj
 	commit table RessultMailsNoObj
 End Sub
 
-sub genereraNaturskyddslager
+sub noParmGenNaturskyd
 	
 	dim x,num_tables as integer
 	,tempstrings,query as string
@@ -223,7 +231,7 @@ sub Add_rowid(ByVal TabLeThatWillBeReSavedAsTemp as string)
 	
 end sub
 
-sub GenerateMailsWithFaObjects
+sub noPa4GenMailsWiFaObjs
 	Commit Table RessultMailsNoObj
 	Alter Table "RessultMailsNoObj" ( add tomtHeltal Integer )
 	
@@ -241,13 +249,13 @@ Select RessultMailsNoObj.ärendenr,
 		
 	if TableInfo(MailsWithFaObjects,TAB_INFO_NROWS) <> TableInfo(RessultMailsNoObj,TAB_INFO_NROWS) then
 		print "[Error] different size of input and output table"
-		debugg = true
+		lDebugg = true
 	end if
 	
 	call görTillBasTabell("MailsWithFaObjects")
 end sub
 
-sub presentation()
+sub noParmPresentation()
 	dim commandstring as string
 	,NrNaturSkydd,i,y as integer
 	NrNaturSkydd = 0
@@ -460,29 +468,19 @@ Loop
 Close File #1
 End Sub
 
-sub localtableOpener
-
-	dim tempstring as String
-
-	tempstring = "G:\sbf\Livsmiljö\Gemensamt\mapbasic program projekt\skikt\Vanliga Tabfiler\"
+sub noPa1LocaltableOpener
 	
-	open table tempstring + "NaturreservatMedFastighet.tab" as NatMedFas
-	Open Table tempstring + "distriktsindelning.TAB"
-	Open Table tempstring + "\NaturreservatGtlkusten_NVK.TAB" 'as visiual aid mapp
-	Open Table tempstring + "\FastighetUtanSkifte.TAB" as FaNoSkift 
+	open table tablePath + "NaturreservatMedFastighet.tab" as NatMedFas
+	Open Table tablePath + "distriktsindelning.TAB"
+	Open Table tablePath + "\NaturreservatGtlkusten_NVK.TAB" 'as visiual aid mapp
+	Open Table tablePath + "\FastighetUtanSkifte.TAB" as FaNoSkift 
 
-	tempstring = "G:\sbf\Livsmiljö\Miljö- och hälsoskydd\Vatten\Avlopp\Klart Vatten\"
-	Open Table tempstring + "Fastigheter\GIS\Fastigheter_Sweref.TAB"
+	Open Table "G:\sbf\Livsmiljö\Miljö- och hälsoskydd\Vatten\Avlopp\Klart Vatten\" + "Fastigheter\GIS\Fastigheter_Sweref.TAB"
 	
-	
-	'open table "K:\KARTOR\LANTMÄTERIET\FASTIGHETSKARTAN\Fastighet_yta.TAB" as Fastighet_ytaORg
-
 	call add_rowId("FaNoSkift") 
-	
-'	tempstring = createTemporaryTableAndOpen("""RessultMailsNoObj"" (ärendenr Char(14),kvFlaggorIsocken integer,NaturStatus Char(40),distrikt Char(40),anteckning Char(254),fastighet char (50),EntryId Char(150))")	
 end sub
 
-sub generateGkFasIndex
+sub noPa6GenGkFasInx
 	
 	Select EntryID,bedömning,_rowid
 	from MailsWithFaObjects,NatMedFas
@@ -491,7 +489,7 @@ sub generateGkFasIndex
 	
 End Sub
 
-sub generateÄrDisNrSwerBet
+sub noParmGenÄrDisNrSwerBet
 	
 	Add Column "distriktsindelning" (antalSweref )From Fastigheter_Sweref Set To Count(*) Where within
 
@@ -502,9 +500,9 @@ sub generateÄrDisNrSwerBet
 
 End Sub
 
-sub cleanUp
+sub noParmCleanUp
 
-	if not(debugg) then
+	if not(lDebugg) then
 		close table ÄrDisNrSwerBet
 		Close Table Fastigheter_Sweref
 		close table GkFasIndex
@@ -519,7 +517,7 @@ sub cleanUp
 	end if
 end sub
 
-sub generateToExport
+sub noParmGenToExport
 
 	Select key, iif(distrikt <> "",iif(NaturStatus="",iif((kvFlaggorIsocken>10),iif(distrikt="söder",1,iif(distrikt="norra",2,(IIF(DISTRIKT="MELLERSTA",3,0)))),5),6),0) "värde" from RessultMailsNoObj into ToExport
 	Export "ToExport" Into "C:\Users\crbk01\Desktop\ToExport.csv" Type "ASCII" Delimiter "," CharSet "WindowsLatin1"	
