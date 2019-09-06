@@ -8,9 +8,9 @@ Definition Table
   Fields 3
     _COL1 Char (140) ;
     _COL2 Char (15) ;
-    _COL3 Char (25) ;
+    _COL3 Char (24) ;
 begin_metadata
 "\IsReadOnly" = "FALSE"
 "\MapInfo" = ""
-"\MapInfo\TableID" = "c5a9ab29-7ba2-4976-bb47-3bea9ad5b6d6"
+"\MapInfo\TableID" = "8e130994-518e-4764-a9b5-e86596369a8f"
 end_metadata
