@@ -116,13 +116,15 @@ end sub
 Sub noPa2_GenResMailsNoObj
 	'todo: error handling on uable to create table
 	'todo: checkt that tableTransfere was flawless.
+	'todo: should throw error case EntryId is not unique
+	'could generate the table again with longer EntryID char value unitill they're unique.
 	
 	Dim printMessage,tempPath,tempstring As String ,nrOfSlices,I,RowTwoLenght as integer ,tempObject as Object
 	
 	Register Table "C:\Users\crbk01\Desktop\Ansökningar, ej sorterade.txt" TYPE ASCII Delimiter 126 Charset "WindowsLatin1" Into applicationDirectory$() & "\OutlookExport.TAB"
 	Open Table applicationDirectory$() & "\OutlookExport.TAB" Interactive
 	
-	tempPath = createTemporaryTableAndOpen("""RessultMailsNoObj"" (ärendenr Char(15),EntryID Char(5),fastighet char(50),kvFlaggorIsocken integer,NaturStatus Char(40),distrikt Char(40),anteckning Char(254),key char (190))")
+	tempPath = createTemporaryTableAndOpen("""RessultMailsNoObj"" (ärendenr Char(15),EntryID Char(9),fastighet char(50),kvFlaggorIsocken integer,NaturStatus Char(40),distrikt Char(40),anteckning Char(254),key char (190))")
 	
 	Insert Into RessultMailsNoObj (ärendenr,fastighet,key,EntryId) Select COl2,COL3,COl1,left$(right$(COl1,9),5)
 	From OutlookExport DropIndex Auto
@@ -145,26 +147,29 @@ sub noPa3_UpdNoFaWithSweref
 End Sub
 
 sub noPa4_GenMailsWiFaObjs
-	'generate a table with the fastighetsbeteckningar that's in the inputlist, out of the fastighetstable
-	'why do i need to make a join? couldn't i just make a any selection, 
-	'then update a column with rowid info... or why do i even need that rowId info?
-	'faNoSkift is a merged area map of the normal fastigheter skikt, as it's interesting to see if any of the skiften has possible kvflagga etc.
-	'todo: make errorcheck consisten throughout program
-	'is this method of joing the tables faster than using "any"? maybe worth keeping for that sake
-	
+	'generate a table with the fastighetsbeteckningar that's in the inputlist, out of the fastighetstable; MailsWithFaObjects
+	'*.inputlist,FaNoSkift._rowid,FaNoSkift.obj
+	'must be a join for the sake of getting the Geoinfo
+	'shouldProbably groupTable before we assign astighetsObj.. discards mails that has same fastighet... maybe not that good
 	
 	Alter Table "RessultMailsNoObj" ( add tomtHeltal Integer ) 'way to sneak around mapbasics inability to make anything than inner joins
 	
-	Select RessultMailsNoObj.ärendenr,RessultMailsNoObj.fastighet,RessultMailsNoObj.EntryID,_rowid from 
-  	RessultMailsNoObj,FaNoSkift 
-  	where FaNoSkift.KIR like "%" & RessultMailsNoObj.fastighet & "%" 
-  		AND RessultMailsNoObj.tomtHeltal = FaNoSkift.tomtHeltal
+	Select * from RessultMailsNoObj group by ärendenr, fastighet into RessultMailsNoObjGrouped
+	
+	call görTillBasTabell("RessultMailsNoObjGrouped")
+	
+	Select RessultMailsNoObjGrouped.ärendenr,RessultMailsNoObjGrouped.fastighet,RessultMailsNoObjGrouped.EntryID,FaNoSkift._rowid from
+  	RessultMailsNoObjGrouped,FaNoSkift 
+  	where FaNoSkift.KIR like "%" & RessultMailsNoObjGrouped.fastighet
+  		AND RessultMailsNoObjGrouped.tomtHeltal = FaNoSkift.tomtHeltal
 	into MailsWithFaObjects 
 			
-	if TableInfo(MailsWithFaObjects,TAB_INFO_NROWS) <> TableInfo(RessultMailsNoObj,TAB_INFO_NROWS) then 'crued error check method, 
+	if TableInfo(MailsWithFaObjects,TAB_INFO_NROWS) <> TableInfo(RessultMailsNoObjGrouped,TAB_INFO_NROWS) then 'crued error check method, 
 		print "[Error] different size of input and output table, Debugg turned 'True'"
 		lDebugg = true
 	end if
+	
+	end program
 	
 	call görTillBasTabell("MailsWithFaObjects")
 end sub
@@ -185,8 +190,7 @@ sub noPa5_GenArDisNrSwerBet
 	'don't know if i like the aproach of altering district table for the sake of getting the count right
 	'think i'd rather generate a table for that
 	'need to create another table to count the flaggs, feels like this is a safer method though
-	'the ressulting table doesn't need any geoInfo as we work with keyvalues in this table, 
-	'seems like mailsWithFaObjects is faulty.
+	'the ressulting table doesn't need any geoInfo
 	
 	dim tempPath as string tempPath = createTemporaryTableAndOpen("""ÄrDisNrSwerBet"" (EntryID Char(5),antalSweref Integer,distrikt Char(50))")  
 	tempPath = createTemporaryTableAndOpen("""KV_SockNrSweref"" (Socken Char(50),antalSweref Integer)")  
@@ -195,26 +199,17 @@ sub noPa5_GenArDisNrSwerBet
 	
 	Insert Into KV_SockNrSweref (Socken) Select Socken From distriktsindelning
 	Add Column "KV_SockNrSweref" (antalSweref)From Fastigheter_Sweref Set To Count(*) Where within
-			
 	
 	Insert Into ÄrDisNrSwerBet (EntryID) Select EntryID From MailsWithFaObjects
 	
-	
 	select EntryID,distrikt from distriktsindelning,MailsWithFaObjects where distriktsindelning.Obj contains MailsWithFaObjects.Obj into relevantDistrict
 	Add Column "ÄrDisNrSwerBet" (distrikt)From relevantDistrict Set To distrikt Where Col1 = Col1
-	
-	
+		
 	Add Column "ÄrDisNrSwerBet" (antalSweref)From KV_SockNrSweref Set To antalSweref Where contains
-	
 	
 	commit table ÄrDisNrSwerBet
 	Create Index On ÄrDisNrSwerBet (EntryID)
 	
-	
-	
-	
-	end program
-
 End Sub
 
 sub noPa6_AltResMailsNoObj 
