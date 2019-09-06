@@ -138,22 +138,27 @@ sub noPa3UpdNoFaWithSweref
 	into swerefFaKorrigerad 
 		Add Column "swerefFaKorrigerad" (fastighet) 
 			From Fastigheter_Sweref Set To fastighet Where rtrim$(ärendenr) = ärendenr
+	
+	Commit Table RessultMailsNoObj
 
 End Sub
 
 sub noPa4GenMailsWiFaObjs
-	Commit Table RessultMailsNoObj
-	Alter Table "RessultMailsNoObj" ( add tomtHeltal Integer )
+	'generate a table with the fastighetsbeteckningar that's in the inputlist, out of the fastighetstable
+	'why do i need to make a join? couldn't i just make a any selection, 
+	'then update a column with rowid info... or why do i even need that rowId info?
+	'faNoSkift is a merged area map of the normal fastigheter skikt, as it's interesting to see if any of the skiften has possible kvflagga etc.
 	
-Select RessultMailsNoObj.ärendenr,
-  RessultMailsNoObj.fastighet, 
-  RessultMailsNoObj.EntryID,
-  _rowid from 
-  RessultMailsNoObj, 
-  FaNoSkift 
-  where FaNoSkift.KIR like "%" & RessultMailsNoObj.fastighet AND RessultMailsNoObj.tomtHeltal = FaNoSkift.tomtHeltal
-
-	into MailsWithFaObjects
+	
+	Alter Table "RessultMailsNoObj" ( add tomtHeltal Integer ) 'way to sneak around mapbasics inability to make anything than inner joins
+	
+	Select RessultMailsNoObj.ärendenr,RessultMailsNoObj.fastighet,RessultMailsNoObj.EntryID,_rowid from 
+  	RessultMailsNoObj,FaNoSkift 
+  	where FaNoSkift.KIR like "%" & RessultMailsNoObj.fastighet & "%" 
+  		AND RessultMailsNoObj.tomtHeltal = FaNoSkift.tomtHeltal
+	into MailsWithFaObjects 
+	
+	
 		
 	if TableInfo(MailsWithFaObjects,TAB_INFO_NROWS) <> TableInfo(RessultMailsNoObj,TAB_INFO_NROWS) then
 		print "[Error] different size of input and output table"
