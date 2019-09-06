@@ -1,7 +1,0 @@
-Fields {*}
-Tables {DASD,Fastigheter_Sweref,Naturreservat}
-Where {(Fastigheter_Sweref.obj within Naturreservat.obj) And (Fastigheter_Sweref.Ärendenr = DASD._COL1)}
-Group {}
-Order {}
-Into {Selection}
-Browse
