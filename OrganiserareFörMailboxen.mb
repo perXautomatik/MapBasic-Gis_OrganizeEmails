@@ -173,39 +173,24 @@ sub noPa4_GenMailsWiFaObjs
 end sub
 
 sub noPa5_GenSwerefNrOnFa
-	'maybe this is an unessesary join, 
+	'makes a reference table with kvflagg anteckning and rowid as key
+	
+	'maybe this is an unessesary join,
 	'we could instead create a new table, and populate it with the information
 	'count should be the second column as it's the number of sweref which is relevant.
 	' as we add the rows from mailswithFaobjects we get there geodata, so we won't need to transfere them seperatly
-	'for testingpurpeus we'll keep the old initialisation and compare there spee
-	dim tempvar as integer
-	tempvar = timer()
-	
-	dim tempPath as string tempPath = createTemporaryTableAndOpen("""SwerefNrOnFa"" (EntryID Char(5),count Integer)")  
-	Create Map For SwerefNrOnFa CoordSys Earth Projection 1, 104
-	
-	Insert Into SwerefNrOnFa ( COL1) Select COL1 From MailsWithFaObjects DropIndex Auto
-	commit table SwerefNrOnFa
-	Create Index On SwerefNrOnFa (EntryID)
-	
-	Add Column "SwerefNrOnFa" (COL2 )From Fastigheter_Sweref Set To Count(*) Where contains
-	
-	dim varTemp2 as integer
-	varTemp2 = timer() - tempvar 
-	print varTemp2
-	tempvar = timer()
+	'for testingpurpeus we'll keep the old initialisation and compare there speed
+	'the difference is absolutely minimal, though in favour of the join.
+	'of damnit, i was chaning the wrong method
+	'seems this method is completely unessesary
 	
 	Select 	MailsWithFaObjects.EntryID,
 			Fastigheter_Sweref.Anteckning 
 	from 	
 			Fastigheter_Sweref, MailsWithFaObjects
 	where 	
-			Fastigheter_Sweref.obj Within MailsWithFaObjects.obj into SwerefNrOnFa2
+			Fastigheter_Sweref.obj Within MailsWithFaObjects.obj into KV_SwerefRess
 			
-	varTemp2 = timer() - tempvar 
-	print varTemp2
-	
-	end program
 	
 	
 end sub
