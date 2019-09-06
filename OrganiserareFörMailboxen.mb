@@ -124,7 +124,7 @@ Sub noPa2_GenResMailsNoObj
 	Register Table "C:\Users\crbk01\Desktop\Ansökningar, ej sorterade.txt" TYPE ASCII Delimiter 126 Charset "WindowsLatin1" Into applicationDirectory$() & "\OutlookExport.TAB"
 	Open Table applicationDirectory$() & "\OutlookExport.TAB" Interactive
 	
-	tempPath = createTemporaryTableAndOpen("""RessultMailsNoObj"" (ärendenr Char(15),EntryID Char(9),fastighet char(50),kvFlaggorIsocken integer,NaturStatus Char(40),distrikt Char(40),anteckning Char(254),key char (190))")
+	tempPath = createTemporaryTableAndOpen("""RessultMailsNoObj"" (ärendenr Char(15),EntryID Char(5),fastighet char(50),kvFlaggorIsocken integer,NaturStatus Char(40),distrikt Char(40),anteckning Char(254),key char (190))")
 	
 	Insert Into RessultMailsNoObj (ärendenr,fastighet,key,EntryId) Select COl2,COL3,COl1,left$(right$(COl1,9),5)
 	From OutlookExport DropIndex Auto
@@ -154,10 +154,8 @@ sub noPa4_GenMailsWiFaObjs
 	
 	Alter Table "RessultMailsNoObj" ( add tomtHeltal Integer ) 'way to sneak around mapbasics inability to make anything than inner joins
 	
-	Select * from RessultMailsNoObj group by ärendenr, fastighet into RessultMailsNoObjGrouped
-	
-	call görTillBasTabell("RessultMailsNoObjGrouped")
-	
+	Select * from RessultMailsNoObj into RessultMailsNoObjGrouped
+		
 	Select RessultMailsNoObjGrouped.ärendenr,RessultMailsNoObjGrouped.fastighet,RessultMailsNoObjGrouped.EntryID,FaNoSkift._rowid from
   	RessultMailsNoObjGrouped,FaNoSkift 
   	where FaNoSkift.KIR like "%" & RessultMailsNoObjGrouped.fastighet
@@ -168,9 +166,7 @@ sub noPa4_GenMailsWiFaObjs
 		print "[Error] different size of input and output table, Debugg turned 'True'"
 		lDebugg = true
 	end if
-	
-	end program
-	
+		
 	call görTillBasTabell("MailsWithFaObjects")
 end sub
 
