@@ -1,4 +1,4 @@
 [Link]
-Application = organiserarFörMailboxen1.mbx
+Application = organiserarFörMailboxen.mbx
 Module = OrganiserareFörMailboxen.mbo
 Module = commonLib\commonLib1.mbo

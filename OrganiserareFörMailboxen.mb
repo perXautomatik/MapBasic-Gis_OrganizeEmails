@@ -49,6 +49,7 @@ Global iStartTime,iprogressRange,iprogress as integer
 'Todo: consider execution unstoppable or stoppable exectuion, subs can be stopped, function can not.
 'Todo: find preformance bottlenecks, connected to lDebugg variable
 'Todo: trim whitespaces before changing 
+'Todo: Colx translator
 
 Sub Main()
 	lDebugg = true
@@ -189,9 +190,10 @@ sub noPa5_GenSwerefNrOnFa
 	
 	Add Column "SwerefNrOnFa" (COL2 )From Fastigheter_Sweref Set To Count(*) Where contains
 	
-	
-	print timer() - tempvar 
-	tempvar = timer
+	dim varTemp2 as integer
+	varTemp2 = timer() - tempvar 
+	print varTemp2
+	tempvar = timer()
 	
 	Select 	MailsWithFaObjects.EntryID,
 			Fastigheter_Sweref.Anteckning 
@@ -200,7 +202,9 @@ sub noPa5_GenSwerefNrOnFa
 	where 	
 			Fastigheter_Sweref.obj Within MailsWithFaObjects.obj into SwerefNrOnFa2
 			
-	print timer() - tempvar 		
+	varTemp2 = timer() - tempvar 
+	print varTemp2
+	
 	end program
 	
 	
