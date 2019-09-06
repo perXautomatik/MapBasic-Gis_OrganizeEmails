@@ -11,19 +11,19 @@ declare sub printToFile(byVal tableName as string,byVal pathString as string)
 declare sub tableColumnAsArray(byVal tableName as string, byVal kolumnNamn as string,array() as integer)
 
 
-declare sub noPa1LocaltableOpener
-Declare Sub noPa2GenResMailsNoObj
-declare sub noPa3UpdNoFaWithSweref
-declare sub noPa4GenMailsWiFaObjs
-declare sub noPa5GenSwerefNrOnFa
-declare sub noPa6AltResMailsNoObj 
-declare sub noPa6GenArDisNrSwerBet 
-declare sub noPa6GenGkFasInx
-declare sub noPa7GenResWithObj
-declare sub noPa8GenNaturskyd
-declare sub noPa9Presentation()
-declare sub noPa10GenToExport	
-declare sub noPa11CleanUp
+declare sub noPa1_LocaltableOpener
+Declare Sub noPa2_GenResMailsNoObj
+declare sub noPa3_UpdNoFaWithSweref
+declare sub noPa4_GenMailsWiFaObjs
+declare sub noPa5_GenSwerefNrOnFa
+declare sub noPa6_AltResMailsNoObj 
+declare sub noPa6_GenArDisNrSwerBet 
+declare sub noPa6_GenGkFasInx
+declare sub noPa7_GenResWithObj
+declare sub noPa8_GenNaturskyd
+declare sub noPa9_Presentation
+declare sub noPa10_GenToExport	
+declare sub noPa11_CleanUp
 
 
 
@@ -48,6 +48,7 @@ Global iStartTime,iprogressRange,iprogress as integer
 'executionOrder in methodnamesOfNoParm? example noPa1,noPa2,noPa3
 'Todo: consider execution unstoppable or stoppable exectuion, subs can be stopped, function can not.
 'Todo: find preformance bottlenecks, connected to lDebugg variable
+'Todo: trim whitespaces before changing 
 
 Sub Main()
 	lDebugg = true
@@ -64,33 +65,33 @@ End Sub
 sub progressor()
 	do case iProgress
 		case 1
-			call noPa1LocaltableOpener
+			call noPa1_LocaltableOpener
 		case 2
-			call noPa2GenResMailsNoObj 'tbl_RessultMailsNoObj OutlookExport
+			call noPa2_GenResMailsNoObj 'tbl_RessultMailsNoObj OutlookExport
 		case 3
-			call noPa3UpdNoFaWithSweref 'korrigera noPa2GenResMailsNoObj där det saknad fastighetMedSweref GenObjFaWithSweref
-			call noPa4GenMailsWiFaObjs 'adds faIndex tbl_MailsWithFaObjects from tbl_RessultMailsNoObj, tbl_FaNoSkift  and tbl_fastighet <> "" 
-			call noPa5GenSwerefNrOnFa 'tbl_SwerefNrOnFa
+			call noPa3_UpdNoFaWithSweref 'korrigera noPa2_GenResMailsNoObj där det saknad fastighetMedSweref GenObjFaWithSweref
+			call noPa4_GenMailsWiFaObjs 'adds faIndex tbl_MailsWithFaObjects from tbl_RessultMailsNoObj, tbl_FaNoSkift  and tbl_fastighet <> "" 
+			call noPa5_GenSwerefNrOnFa 'tbl_SwerefNrOnFa
 		case 4
-			call noPa6GenGkFasInx 'tbl_GkFasIndex MailsWithFaObjects,NatMedFas
+			call noPa6_GenGkFasInx 'tbl_GkFasIndex MailsWithFaObjects,NatMedFas
 		case 5
-			call noPa6GenArDisNrSwerBet 'nrKvFlaggot och distrikt tbl_ÄrDisNrSwerBet  from tbl_MailsWithFaObjects, tbl_distriktsindelning
+			call noPa6_GenArDisNrSwerBet 'nrKvFlaggot och distrikt tbl_ÄrDisNrSwerBet  from tbl_MailsWithFaObjects, tbl_distriktsindelning
 		case 6
-			call noPa6AltResMailsNoObj 
+			call noPa6_AltResMailsNoObj 
 							'RessultMailsNoObj 
 								'kvFlaggorIsocken,distrikt ÄrDisNrSwerBet antalSweref
 								'NaturStatus GkFasIndex bedömning
 								'anteckning fastigheter_sweref 				
 		case 7
-			call noPa7GenResWithObj 'ResTabWithObj
+			call noPa7_GenResWithObj 'ResTabWithObj
 		case 8
-			call noPa8GenNaturskyd '@Natur... GkFasIndex 
+			call noPa8_GenNaturskyd '@Natur... GkFasIndex 
 		case 9
-			call noPa9Presentation	
+			call noPa9_Presentation	
 		case 10
-			call noPa10GenToExport '@ToExport RessultMailsNoObj
+			call noPa10_GenToExport '@ToExport RessultMailsNoObj
 		case 11
-			call noPa11CleanUp
+			call noPa11_CleanUp
 	end case
 			
 	call increment(iProgress,iProgressRange,iStartTime)
@@ -99,7 +100,7 @@ end sub
 
 
 
-sub noPa1LocaltableOpener
+sub noPa1_LocaltableOpener
 	'todo: error handling on unable to open table
 	
 	open table tablePath + "NaturreservatMedFastighet.tab" as NatMedFas
@@ -112,7 +113,7 @@ sub noPa1LocaltableOpener
 	dim cantStopFunctionVariable as logical cantStopFunctionVariable = add_rowId("FaNoSkift")
 end sub
 
-Sub noPa2GenResMailsNoObj
+Sub noPa2_GenResMailsNoObj
 	'todo: error handling on uable to create table
 	'todo: checkt that tableTransfere was flawless.
 	
@@ -129,7 +130,7 @@ Sub noPa2GenResMailsNoObj
 	
 End Sub
 
-sub noPa3UpdNoFaWithSweref
+sub noPa3_UpdNoFaWithSweref
 	'finds Ärendenr whom has no fastighet
 	'updates column of fastighet if there ärendenr can be found 
 	'someWhat obsolite today as most old ärendenr doesn't correspond to there vision nr due to mbhn
@@ -143,11 +144,13 @@ sub noPa3UpdNoFaWithSweref
 
 End Sub
 
-sub noPa4GenMailsWiFaObjs
+sub noPa4_GenMailsWiFaObjs
 	'generate a table with the fastighetsbeteckningar that's in the inputlist, out of the fastighetstable
 	'why do i need to make a join? couldn't i just make a any selection, 
 	'then update a column with rowid info... or why do i even need that rowId info?
 	'faNoSkift is a merged area map of the normal fastigheter skikt, as it's interesting to see if any of the skiften has possible kvflagga etc.
+	'todo: make errorcheck consisten throughout program
+	'is this method of joing the tables faster than using "any"? maybe worth keeping for that sake
 	
 	
 	Alter Table "RessultMailsNoObj" ( add tomtHeltal Integer ) 'way to sneak around mapbasics inability to make anything than inner joins
@@ -160,19 +163,48 @@ sub noPa4GenMailsWiFaObjs
 	
 	
 		
-	if TableInfo(MailsWithFaObjects,TAB_INFO_NROWS) <> TableInfo(RessultMailsNoObj,TAB_INFO_NROWS) then
-		print "[Error] different size of input and output table"
+	if TableInfo(MailsWithFaObjects,TAB_INFO_NROWS) <> TableInfo(RessultMailsNoObj,TAB_INFO_NROWS) then 'crued error check method, 
+		print "[Error] different size of input and output table, Debugg turned 'True'"
 		lDebugg = true
 	end if
 	
 	call görTillBasTabell("MailsWithFaObjects")
 end sub
 
-sub noPa5GenSwerefNrOnFa
-	Select MailsWithFaObjects.EntryID, Fastigheter_Sweref.Anteckning from Fastigheter_Sweref, MailsWithFaObjects where Fastigheter_Sweref.obj Within MailsWithFaObjects.obj into SwerefNrOnFa
+sub noPa5_GenSwerefNrOnFa
+	'maybe this is an unessesary join, 
+	'we could instead create a new table, and populate it with the information
+	'count should be the second column as it's the number of sweref which is relevant.
+	' as we add the rows from mailswithFaobjects we get there geodata, so we won't need to transfere them seperatly
+	'for testingpurpeus we'll keep the old initialisation and compare there spee
+	dim tempvar as integer
+	tempvar = timer()
+	
+	dim tempPath as string tempPath = createTemporaryTableAndOpen("""SwerefNrOnFa"" (EntryID Char(5),count Integer)")  
+	Create Map For SwerefNrOnFa CoordSys Earth Projection 1, 104
+	
+	Insert Into SwerefNrOnFa ( COL1) Select COL1 From MailsWithFaObjects DropIndex Auto
+	commit table SwerefNrOnFa
+	Create Index On SwerefNrOnFa (EntryID)
+	
+	Add Column "SwerefNrOnFa" (COL2 )From Fastigheter_Sweref Set To Count(*) Where contains
+	
+	
+	print timer() - tempvar 
+	tempvar = timer
+	
+	Select 	MailsWithFaObjects.EntryID,
+			Fastigheter_Sweref.Anteckning 
+	from 	
+			Fastigheter_Sweref, MailsWithFaObjects
+	where 	
+			Fastigheter_Sweref.obj Within MailsWithFaObjects.obj into SwerefNrOnFa2
+			
+	print timer() - tempvar 		
+	end program
 end sub
 
-sub noPa6AltResMailsNoObj 
+sub noPa6_AltResMailsNoObj 
 	Add Column "RessultMailsNoObj" (kvFlaggorIsocken)From ÄrDisNrSwerBet Set To antalSweref Where COL2 = COL1
 	Add Column "RessultMailsNoObj" (distrikt)From ÄrDisNrSwerBet Set To distrikt Where COL2 = COL1 
 	Add Column "RessultMailsNoObj" (NaturStatus )From GkFasIndex Set To bedömning Where COL2 = COL1 
@@ -180,7 +212,7 @@ sub noPa6AltResMailsNoObj
 	commit table RessultMailsNoObj
 End Sub
 
-sub noPa6GenGkFasInx
+sub noPa6_GenGkFasInx
 	
 	Select EntryID,bedömning,_rowid
 	from MailsWithFaObjects,NatMedFas
@@ -189,7 +221,7 @@ sub noPa6GenGkFasInx
 	
 End Sub
 
-sub noPa6GenArDisNrSwerBet
+sub noPa6_GenArDisNrSwerBet
 	
 	Add Column "distriktsindelning" (antalSweref )From Fastigheter_Sweref Set To Count(*) Where within
 
@@ -200,7 +232,7 @@ sub noPa6GenArDisNrSwerBet
 
 End Sub
 
-sub noPa7GenResWithObj
+sub noPa7_GenResWithObj
 	Select RessultMailsNoObj.ärendenr,
 		RessultMailsNoObj.anteckning, 
 		RessultMailsNoObj.kvFlaggorIsocken,
@@ -216,7 +248,7 @@ sub noPa7GenResWithObj
 	call görTillBasTabell("ResTabWithObj")
 end sub
 
-sub noPa8GenNaturskyd
+sub noPa8_GenNaturskyd
 	
 	dim x,num_tables as integer
 	,tempstrings,query as string
@@ -241,7 +273,7 @@ sub noPa8GenNaturskyd
 		loop		
 End sub
 
-sub noPa9Presentation()
+sub noPa9_Presentation
 	dim commandstring as string
 	,NrNaturSkydd,i,y as integer
 	NrNaturSkydd = 0
@@ -291,14 +323,14 @@ sub noPa9Presentation()
 	
 end sub
 
-sub noPa10GenToExport
+sub noPa10_GenToExport
 
 	Select key, iif(distrikt <> "",iif(NaturStatus="",iif((kvFlaggorIsocken>10),iif(distrikt="söder",1,iif(distrikt="norra",2,(IIF(DISTRIKT="MELLERSTA",3,0)))),5),6),0) "värde" from RessultMailsNoObj into ToExport
 	Export "ToExport" Into "C:\Users\crbk01\Desktop\ToExport.csv" Type "ASCII" Delimiter "," CharSet "WindowsLatin1"	
 
 end sub
 
-sub noPa11CleanUp
+sub noPa11_CleanUp
 
 	if not(lDebugg) then
 		close table ÄrDisNrSwerBet
