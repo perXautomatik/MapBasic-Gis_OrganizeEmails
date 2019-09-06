@@ -17,8 +17,8 @@ declare sub noPa3_UpdNoFaWithSweref
 declare sub noPa4_GenMailsWiFaObjs
 declare sub noPa5_GenSwerefNrOnFa
 declare sub noPa6_AltResMailsNoObj 
-declare sub noPa6_GenArDisNrSwerBet 
-declare sub noPa6_GenGkFasInx
+declare sub noPa5_GenArDisNrSwerBet 
+declare sub noPa5_GenGkFasInx
 declare sub noPa7_GenResWithObj
 declare sub noPa8_GenNaturskyd
 declare sub noPa9_Presentation
@@ -72,11 +72,10 @@ sub progressor()
 		case 3
 			call noPa3_UpdNoFaWithSweref 'korrigera noPa2_GenResMailsNoObj där det saknad fastighetMedSweref GenObjFaWithSweref
 			call noPa4_GenMailsWiFaObjs 'adds faIndex tbl_MailsWithFaObjects from tbl_RessultMailsNoObj, tbl_FaNoSkift  and tbl_fastighet <> "" 
-			call noPa5_GenSwerefNrOnFa 'tbl_SwerefNrOnFa
 		case 4
-			call noPa6_GenGkFasInx 'tbl_GkFasIndex MailsWithFaObjects,NatMedFas
+			call noPa5_GenGkFasInx 'tbl_GkFasIndex MailsWithFaObjects,NatMedFas
 		case 5
-			call noPa6_GenArDisNrSwerBet 'nrKvFlaggot och distrikt tbl_ÄrDisNrSwerBet  from tbl_MailsWithFaObjects, tbl_distriktsindelning
+			call noPa5_GenArDisNrSwerBet 'nrKvFlaggot och distrikt tbl_ÄrDisNrSwerBet  from tbl_MailsWithFaObjects, tbl_distriktsindelning
 		case 6
 			call noPa6_AltResMailsNoObj 
 							'RessultMailsNoObj 
@@ -161,9 +160,7 @@ sub noPa4_GenMailsWiFaObjs
   	where FaNoSkift.KIR like "%" & RessultMailsNoObj.fastighet & "%" 
   		AND RessultMailsNoObj.tomtHeltal = FaNoSkift.tomtHeltal
 	into MailsWithFaObjects 
-	
-	
-		
+			
 	if TableInfo(MailsWithFaObjects,TAB_INFO_NROWS) <> TableInfo(RessultMailsNoObj,TAB_INFO_NROWS) then 'crued error check method, 
 		print "[Error] different size of input and output table, Debugg turned 'True'"
 		lDebugg = true
@@ -172,38 +169,9 @@ sub noPa4_GenMailsWiFaObjs
 	call görTillBasTabell("MailsWithFaObjects")
 end sub
 
-sub noPa5_GenSwerefNrOnFa
-	'makes a reference table with kvflagg anteckning and rowid as key
-	
-	'maybe this is an unessesary join,
-	'we could instead create a new table, and populate it with the information
-	'count should be the second column as it's the number of sweref which is relevant.
-	' as we add the rows from mailswithFaobjects we get there geodata, so we won't need to transfere them seperatly
-	'for testingpurpeus we'll keep the old initialisation and compare there speed
-	'the difference is absolutely minimal, though in favour of the join.
-	'of damnit, i was chaning the wrong method
-	'seems this method is completely unessesary
-	
-	Select 	MailsWithFaObjects.EntryID,
-			Fastigheter_Sweref.Anteckning 
-	from 	
-			Fastigheter_Sweref, MailsWithFaObjects
-	where 	
-			Fastigheter_Sweref.obj Within MailsWithFaObjects.obj into KV_SwerefRess
-			
-	
-	
-end sub
-
-sub noPa6_AltResMailsNoObj 
-	Add Column "RessultMailsNoObj" (kvFlaggorIsocken)From ÄrDisNrSwerBet Set To antalSweref Where COL2 = COL1
-	Add Column "RessultMailsNoObj" (distrikt)From ÄrDisNrSwerBet Set To distrikt Where COL2 = COL1 
-	Add Column "RessultMailsNoObj" (NaturStatus )From GkFasIndex Set To bedömning Where COL2 = COL1 
-	Add Column "RessultMailsNoObj" (anteckning)From SwerefNrOnFa Set To Anteckning Where COL2 = COL1 
-	commit table RessultMailsNoObj
-End Sub
-
-sub noPa6_GenGkFasInx
+sub noPa5_GenGkFasInx
+	'generates a KVish table, with EntryId(key), bedömning (val), _rowId (key)
+	'through a join between the tables NatWithFas and MailsWithObj
 	
 	Select EntryID,bedömning,_rowid
 	from MailsWithFaObjects,NatMedFas
@@ -212,15 +180,49 @@ sub noPa6_GenGkFasInx
 	
 End Sub
 
-sub noPa6_GenArDisNrSwerBet
+sub noPa5_GenArDisNrSwerBet
+	'generates a KVish table with EntryId(key), antalSweref (val), district (val)
+	'don't know if i like the aproach of altering district table for the sake of getting the count right
+	'think i'd rather generate a table for that
+	'need to create another table to count the flaggs, feels like this is a safer method though
+	'the ressulting table doesn't need any geoInfo as we work with keyvalues in this table, 
+	'seems like mailsWithFaObjects is faulty.
 	
-	Add Column "distriktsindelning" (antalSweref )From Fastigheter_Sweref Set To Count(*) Where within
+	dim tempPath as string tempPath = createTemporaryTableAndOpen("""ÄrDisNrSwerBet"" (EntryID Char(5),antalSweref Integer,distrikt Char(50))")  
+	tempPath = createTemporaryTableAndOpen("""KV_SockNrSweref"" (Socken Char(50),antalSweref Integer)")  
+	Create Map For KV_SockNrSweref CoordSys Earth Projection 1, 104
+	Create Map For ÄrDisNrSwerBet CoordSys Earth Projection 1, 104
+	
+	Insert Into KV_SockNrSweref (Socken) Select Socken From distriktsindelning
+	Add Column "KV_SockNrSweref" (antalSweref)From Fastigheter_Sweref Set To Count(*) Where within
+			
+	
+	Insert Into ÄrDisNrSwerBet (EntryID) Select EntryID From MailsWithFaObjects
+	
+	
+	select EntryID,distrikt from distriktsindelning,MailsWithFaObjects where distriktsindelning.Obj contains MailsWithFaObjects.Obj into relevantDistrict
+	Add Column "ÄrDisNrSwerBet" (distrikt)From relevantDistrict Set To distrikt Where Col1 = Col1
+	
+	
+	Add Column "ÄrDisNrSwerBet" (antalSweref)From KV_SockNrSweref Set To antalSweref Where contains
+	
+	
+	commit table ÄrDisNrSwerBet
+	Create Index On ÄrDisNrSwerBet (EntryID)
+	
+	
+	
+	
+	end program
 
-	Select EntryID,antalSweref,distrikt
-	from MailsWithFaObjects, distriktsindelning 
-	where MailsWithFaObjects.Obj Within distriktsindelning.Obj
-	group by EntryID into ÄrDisNrSwerBet 
+End Sub
 
+sub noPa6_AltResMailsNoObj 
+	Add Column "RessultMailsNoObj" (kvFlaggorIsocken)From ÄrDisNrSwerBet Set To antalSweref Where COL2 = COL1
+	Add Column "RessultMailsNoObj" (distrikt)From ÄrDisNrSwerBet Set To distrikt Where COL2 = COL1 
+	Add Column "RessultMailsNoObj" (NaturStatus )From GkFasIndex Set To bedömning Where COL2 = COL1 
+	Add Column "RessultMailsNoObj" (anteckning)From SwerefNrOnFa Set To Anteckning Where COL2 = COL1 
+	commit table RessultMailsNoObj
 End Sub
 
 sub noPa7_GenResWithObj
