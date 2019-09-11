@@ -56,8 +56,8 @@ Sub Main()
 	iStartTime = timer()
 	iprogressRange = 11
 	iprogress = 0	
-	tablePath = "G:\sbf\LivsmiljÃ¶\Gemensamt\mapbasic program projekt\skikt\Vanliga Tabfiler\"
-ProgressBar "Arbetar... dags att hÃ¤mta Te"
+	tablePath = "G:\sbf\Livsmiljö\Gemensamt\mapbasic program projekt\skikt\Vanliga Tabfiler\"
+ProgressBar "Arbetar... dags att hämta Te"
 	     Calling progressor
 Range iProgressRange
 
@@ -70,17 +70,17 @@ sub progressor()
 		case 2
 			call noPa2_GenResMailsNoObj 'tbl_RessultMailsNoObj OutlookExport
 		case 3
-			call noPa3_UpdNoFaWithSweref 'korrigera noPa2_GenResMailsNoObj dÃ¤r det saknad fastighetMedSweref GenObjFaWithSweref
+			call noPa3_UpdNoFaWithSweref 'korrigera noPa2_GenResMailsNoObj där det saknad fastighetMedSweref GenObjFaWithSweref
 			call noPa4_GenMailsWiFaObjs 'adds faIndex tbl_MailsWithFaObjects from tbl_RessultMailsNoObj, tbl_FaNoSkift  and tbl_fastighet <> "" 
 		case 4
 			call noPa5_GenGkFasInx 'tbl_GkFasIndex MailsWithFaObjects,NatMedFas
 		case 5
-			call noPa5_GenArDisNrSwerBet 'nrKvFlaggot och distrikt tbl_Ã„rDisNrSwerBet  from tbl_MailsWithFaObjects, tbl_distriktsindelning
+			call noPa5_GenArDisNrSwerBet 'nrKvFlaggot och distrikt tbl_ÄrDisNrSwerBet  from tbl_MailsWithFaObjects, tbl_distriktsindelning
 		case 6
 			call noPa6_AltResMailsNoObj 
 							'RessultMailsNoObj 
-								'kvFlaggorIsocken,distrikt Ã„rDisNrSwerBet antalSweref
-								'NaturStatus GkFasIndex bedÃ¶mning
+								'kvFlaggorIsocken,distrikt ÄrDisNrSwerBet antalSweref
+								'NaturStatus GkFasIndex bedömning
 								'anteckning fastigheter_sweref 				
 		case 7
 			call noPa7_GenResWithObj 'ResTabWithObj
@@ -108,7 +108,7 @@ sub noPa1_LocaltableOpener
 	Open Table tablePath + "\NaturreservatGtlkusten_NVK.TAB" 'as visiual aid mapp
 	Open Table tablePath + "\FastighetUtanSkifte.TAB" as FaNoSkift 
 
-	Open Table "G:\sbf\LivsmiljÃ¶\MiljÃ¶- och hÃ¤lsoskydd\Vatten\Avlopp\Klart Vatten\" + "Fastigheter\GIS\Fastigheter_Sweref.TAB"
+	Open Table "G:\sbf\Livsmiljö\Miljö- och hälsoskydd\Vatten\Avlopp\Klart Vatten\" + "Fastigheter\GIS\Fastigheter_Sweref.TAB"
 	
 	dim cantStopFunctionVariable as logical cantStopFunctionVariable = add_rowId("FaNoSkift")
 end sub
@@ -121,26 +121,26 @@ Sub noPa2_GenResMailsNoObj
 	
 	Dim printMessage,tempPath,tempstring As String ,nrOfSlices,I,RowTwoLenght as integer ,tempObject as Object
 	
-	Register Table "C:\Users\crbk01\Desktop\AnsÃ¶kningar, ej sorterade.txt" TYPE ASCII Delimiter 126 Charset "WindowsLatin1" Into applicationDirectory$() & "\OutlookExport.TAB"
+	Register Table "C:\Users\crbk01\Desktop\Ansökningar, ej sorterade.txt" TYPE ASCII Delimiter 126 Charset "WindowsLatin1" Into applicationDirectory$() & "\OutlookExport.TAB"
 	Open Table applicationDirectory$() & "\OutlookExport.TAB" Interactive
 	
-	tempPath = createTemporaryTableAndOpen("""RessultMailsNoObj"" (Ã¤rendenr Char(15),EntryID Char(5),fastighet char(50),kvFlaggorIsocken integer,NaturStatus Char(40),distrikt Char(40),anteckning Char(254),key char (190))")
+	tempPath = createTemporaryTableAndOpen("""RessultMailsNoObj"" (ärendenr Char(15),EntryID Char(5),fastighet char(50),kvFlaggorIsocken integer,NaturStatus Char(40),distrikt Char(40),anteckning Char(254),key char (190))")
 	
-	Insert Into RessultMailsNoObj (Ã¤rendenr,fastighet,key,EntryId) Select COl2,COL3,COl1,left$(right$(COl1,9),5)
+	Insert Into RessultMailsNoObj (ärendenr,fastighet,key,EntryId) Select COl2,COL3,COl1,left$(right$(COl1,9),5)
 	From OutlookExport DropIndex Auto
 	commit table RessultMailsNoObj
 	
 End Sub
 
 sub noPa3_UpdNoFaWithSweref
-	'finds Ã„rendenr whom has no fastighet
-	'updates column of fastighet if there Ã¤rendenr can be found 
-	'someWhat obsolite today as most old Ã¤rendenr doesn't correspond to there vision nr due to mbhn
+	'finds Ärendenr whom has no fastighet
+	'updates column of fastighet if there ärendenr can be found 
+	'someWhat obsolite today as most old ärendenr doesn't correspond to there vision nr due to mbhn
 	select * from RessultMailsNoObj 
 		where RessultMailsNoObj.fastighet = ""
 	into swerefFaKorrigerad 
 		Add Column "swerefFaKorrigerad" (fastighet) 
-			From Fastigheter_Sweref Set To fastighet Where rtrim$(Ã¤rendenr) = Ã¤rendenr
+			From Fastigheter_Sweref Set To fastighet Where rtrim$(ärendenr) = ärendenr
 	
 	Commit Table RessultMailsNoObj
 
@@ -153,28 +153,26 @@ sub noPa4_GenMailsWiFaObjs
 	'shouldProbably groupTable before we assign astighetsObj.. discards mails that has same fastighet... maybe not that good
 	
 	Alter Table "RessultMailsNoObj" ( add tomtHeltal Integer ) 'way to sneak around mapbasics inability to make anything than inner joins
-	
-	Select * from RessultMailsNoObj into RessultMailsNoObjGrouped
-		
-	Select RessultMailsNoObjGrouped.Ã¤rendenr,RessultMailsNoObjGrouped.fastighet,RessultMailsNoObjGrouped.EntryID,FaNoSkift._rowid from
-  	RessultMailsNoObjGrouped,FaNoSkift 
-  	where FaNoSkift.KIR like "%" & RessultMailsNoObjGrouped.fastighet
-  		AND RessultMailsNoObjGrouped.tomtHeltal = FaNoSkift.tomtHeltal
+			
+	Select RessultMailsNoObj.ärendenr,RessultMailsNoObj.fastighet,RessultMailsNoObj.EntryID,FaNoSkift._rowid from
+  	RessultMailsNoObj,FaNoSkift 
+  	where FaNoSkift.KIR like "%" & RessultMailsNoObj.fastighet
+  		AND RessultMailsNoObj.tomtHeltal = FaNoSkift.tomtHeltal
 	into MailsWithFaObjects 
 			
-	if TableInfo(MailsWithFaObjects,TAB_INFO_NROWS) <> TableInfo(RessultMailsNoObjGrouped,TAB_INFO_NROWS) then 'crued error check method, 
+	if TableInfo(MailsWithFaObjects,TAB_INFO_NROWS) <> TableInfo(RessultMailsNoObj,TAB_INFO_NROWS) then 'crued error check method, 
 		print "[Error] different size of input and output table, Debugg turned 'True'"
 		lDebugg = true
 	end if
 		
-	call gÃ¶rTillBasTabell("MailsWithFaObjects")
+	call görTillBasTabell("MailsWithFaObjects")
 end sub
 
 sub noPa5_GenGkFasInx
-	'generates a KVish table, with EntryId(key), bedÃ¶mning (val), _rowId (key)
+	'generates a KVish table, with EntryId(key), bedömning (val), _rowId (key)
 	'through a join between the tables NatWithFas and MailsWithObj
 	
-	Select EntryID,bedÃ¶mning,_rowid
+	Select EntryID,bedömning,_rowid
 	from MailsWithFaObjects,NatMedFas
 	where NatMedFas.kir = MailsWithFaObjects.fastighet
 	into GkFasIndex
@@ -188,41 +186,47 @@ sub noPa5_GenArDisNrSwerBet
 	'need to create another table to count the flaggs, feels like this is a safer method though
 	'the ressulting table doesn't need any geoInfo
 	
-	dim tempPath as string tempPath = createTemporaryTableAndOpen("""Ã„rDisNrSwerBet"" (EntryID Char(5),antalSweref Integer,distrikt Char(50))")  
+	dim tempPath as string tempPath = createTemporaryTableAndOpen("""ÄrDisNrSwerBet"" (EntryID Char(5),antalSweref Integer,distrikt Char(50))")  
 	tempPath = createTemporaryTableAndOpen("""KV_SockNrSweref"" (Socken Char(50),antalSweref Integer)")  
+	tempPath = createTemporaryTableAndOpen("""KV_FastSwerefAntec"" (fastighet Char(50),anteckning Char(256))")  
+	
 	Create Map For KV_SockNrSweref CoordSys Earth Projection 1, 104
-	Create Map For Ã„rDisNrSwerBet CoordSys Earth Projection 1, 104
+	Create Map For KV_FastSwerefAntec CoordSys Earth Projection 1, 104
+	Create Map For ÄrDisNrSwerBet CoordSys Earth Projection 1, 104
+	
+	Insert Into KV_FastSwerefAntec (COL1) Select COL2 from MailsWithFaObjects
+	Add Column "KV_FastSwerefAntec" (anteckning)From Fastigheter_Sweref Set To anteckning Where within 'flaggor som finns specifict på fastigheten
+	
 	
 	Insert Into KV_SockNrSweref (Socken) Select Socken From distriktsindelning
-	Add Column "KV_SockNrSweref" (antalSweref)From Fastigheter_Sweref Set To Count(*) Where within
+	Add Column "KV_SockNrSweref" (antalSweref)From Fastigheter_Sweref Set To Count(*) Where within 'flaggor som finns specifickt på socknen.
 	
-	Insert Into Ã„rDisNrSwerBet (EntryID) Select EntryID From MailsWithFaObjects
+	Insert Into ÄrDisNrSwerBet (EntryID) Select EntryID From MailsWithFaObjects
 	
 	select EntryID,distrikt from distriktsindelning,MailsWithFaObjects where distriktsindelning.Obj contains MailsWithFaObjects.Obj into relevantDistrict
-	Add Column "Ã„rDisNrSwerBet" (distrikt)From relevantDistrict Set To distrikt Where Col1 = Col1
+	Add Column "ÄrDisNrSwerBet" (distrikt)From relevantDistrict Set To distrikt Where Col1 = Col1
 		
-	Add Column "Ã„rDisNrSwerBet" (antalSweref)From KV_SockNrSweref Set To antalSweref Where contains
+	Add Column "ÄrDisNrSwerBet" (antalSweref)From KV_SockNrSweref Set To antalSweref Where contains
 	
-	commit table Ã„rDisNrSwerBet
-	Create Index On Ã„rDisNrSwerBet (EntryID)
+	commit table ÄrDisNrSwerBet
+	Create Index On ÄrDisNrSwerBet (EntryID)
 	
 End Sub
 
 sub noPa6_AltResMailsNoObj 
 	'populates rather than alter, wonder why i chose to do it like this rather than joining two tables,
 	'besides wasn't there a mails with objects earlier? as i remmeber it, there were some design choise for the sake
-	'of the naturvÃ¤rdes parts, 
-	
-	Add Column "RessultMailsNoObj" (kvFlaggorIsocken)From Ã„rDisNrSwerBet Set To antalSweref Where COL2 = COL1
-	Add Column "RessultMailsNoObj" (distrikt)From Ã„rDisNrSwerBet Set To distrikt Where COL2 = COL1 
-	Add Column "RessultMailsNoObj" (NaturStatus )From GkFasIndex Set To bedÃ¶mning Where COL2 = COL1 
-	Add Column "RessultMailsNoObj" (anteckning)From SwerefNrOnFa Set To Anteckning Where COL2 = COL1 
+	'of the naturvärdes parts, 
+	Add Column "RessultMailsNoObj" (kvFlaggorIsocken)From ÄrDisNrSwerBet Set To antalSweref Where COL2 = COL1
+	Add Column "RessultMailsNoObj" (distrikt)From ÄrDisNrSwerBet Set To distrikt Where COL2 = COL1 
+	Add Column "RessultMailsNoObj" (NaturStatus )From GkFasIndex Set To bedömning Where COL2 = COL1 
+	Add Column "RessultMailsNoObj" (anteckning)From KV_FastSwerefAntec Set To Anteckning Where COL2 = COL1 
 	commit table RessultMailsNoObj
 End Sub
 
 sub noPa7_GenResWithObj
 	'simple join, and then dumps it into a named temptable
-	Select RessultMailsNoObj.Ã¤rendenr,
+	Select RessultMailsNoObj.ärendenr,
 		RessultMailsNoObj.anteckning, 
 		RessultMailsNoObj.kvFlaggorIsocken,
 		RessultMailsNoObj.NaturStatus, 
@@ -234,7 +238,7 @@ sub noPa7_GenResWithObj
 	from RessultMailsNoObj,FaNoSkift
 	where FaNoSkift.KIR = RessultMailsNoObj.fastighet 
 	into ResTabWithObj
-	call gÃ¶rTillBasTabell("ResTabWithObj")
+	call görTillBasTabell("ResTabWithObj")
 end sub
 
 sub noPa8_GenNaturskyd
@@ -245,7 +249,6 @@ sub noPa8_GenNaturskyd
 	'GkFasIndex, is a kv table as i remmeber, with rowNumber and fastighetsNamn
 	
 	dim x,num_tables as integer,tempstrings,query as string
-	
 	x=1 fetch first from GkFasIndex
 		do until EOT(GkFasIndex)
 			
@@ -319,7 +322,7 @@ end sub
 
 sub noPa10_GenToExport
 
-	Select key, iif(distrikt <> "",iif(NaturStatus="",iif((kvFlaggorIsocken>10),iif(distrikt="sÃ¶der",1,iif(distrikt="norra",2,(IIF(DISTRIKT="MELLERSTA",3,0)))),5),6),0) "vÃ¤rde" from RessultMailsNoObj into ToExport
+	Select key, iif(distrikt <> "",iif(NaturStatus="",iif((kvFlaggorIsocken>10),iif(distrikt="söder",1,iif(distrikt="norra",2,(IIF(DISTRIKT="MELLERSTA",3,0)))),5),6),0) "värde" from RessultMailsNoObj into ToExport
 	Export "ToExport" Into "C:\Users\crbk01\Desktop\ToExport.csv" Type "ASCII" Delimiter "," CharSet "WindowsLatin1"	
 
 end sub
@@ -327,7 +330,7 @@ end sub
 sub noPa11_CleanUp
 
 	if not(lDebugg) then
-		close table Ã„rDisNrSwerBet
+		close table ÄrDisNrSwerBet
 		Close Table Fastigheter_Sweref
 		close table GkFasIndex
 		close table NatMedFas
@@ -396,7 +399,7 @@ function Add_rowid(ByVal TabLeThatWillBeReSavedAsTemp as string) as logical
 		Add Column TabLeThatWillBeReSavedAsTemp (_rowid integer) from tempAlias set To rowid
 	end if
 		
-	call gÃ¶rTillBasTabell(TabLeThatWillBeReSavedAsTemp)
+	call görTillBasTabell(TabLeThatWillBeReSavedAsTemp)
 	Add_rowid = true
 end function
 
@@ -416,19 +419,19 @@ sub dedupeIntoTemp(byVal tableNameWhoHasTHe_RowidCOlumn as string, byVal kolumnN
 
 	select * from tableNameWhoHasTHe_RowidCOlumn group by tempAlias2 into tabellUtanGrafik 'makes the object destroying groupBy
 	
-	call gÃ¶rTillbastabell(tabellUtanGrafik) 'stores result as temporary table and closes original
+	call görTillbastabell(tabellUtanGrafik) 'stores result as temporary table and closes original
 	
 	run command ("select " & getColumnsOfTable_asString(tableNameWhoHasTHe_RowidCOlumn) & 
 	" from " & tableNameWhoHasTHe_RowidCOlumn & 
 	",tabellUtanGrafik where " & tableNameWhoHasTHe_RowidCOlumn & "._rowid = tabellUtanGrafik._rowid  into withGrafik") 'makes a join of the original table and the new temporary table without objects
 	
-	call gÃ¶rTillBastabell("withGrafik") 'the ressulting table is stored as a temporary table, and the join is discarded.
+	call görTillBastabell("withGrafik") 'the ressulting table is stored as a temporary table, and the join is discarded.
 
 	close table tableNameWhoHasTHe_RowidCOlumn 'cleanup
 	close table tabellUtanGrafik 'cleanup
 	select * from withGrafik into tableNameWhoHasTHe_RowidCOlumn 'renaming ressult table to take the place of initial table
 	
-	call gÃ¶rTillBastabell("tableNameWhoHasTHe_RowidCOlumn") 'sames the table in new name
+	call görTillBastabell("tableNameWhoHasTHe_RowidCOlumn") 'sames the table in new name
 	close table withGrafik
 	
 	run command ("Create Index On " & tableNameWhoHasTHe_RowidCOlumn & "(" & kolumnNamn & ")") 'makes sure that the index now reflect the new item density after deduping.
