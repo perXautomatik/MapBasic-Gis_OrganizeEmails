@@ -1,5 +1,5 @@
 Include "MapBasic.def"
-include "C:\Users\crbk01\OneDrive - Region Gotland\Till Github\Mapinfo\CommonLib\commonLib1.def"
+include "C:\Users\crbk01\OneDrive - Region Gotland\Till Github\Mapinfo\organiserarFörMailboxen\commonLib\commonLib1.def"
 
 Declare Sub Main
 declare sub progressor()
@@ -9,6 +9,7 @@ declare function Add_rowid(ByVal tableName as string) as logical
 declare sub dedupeIntoTemp(byVal tableName as string, byVal kolumnNamn as string)
 declare sub printToFile(byVal tableName as string,byVal pathString as string)
 declare sub tableColumnAsArray(byVal tableName as string, byVal kolumnNamn as string,array() as integer)
+declare sub renameTablesWithColumn(byVal enumeratedTablePrefix as string, byVal columnName as string)
 
 
 declare sub noPa1_LocaltableOpener
@@ -50,6 +51,9 @@ Global iStartTime,iprogressRange,iprogress as integer
 'Todo: find preformance bottlenecks, connected to lDebugg variable
 'Todo: trim whitespaces before changing 
 'Todo: Colx translator
+'Todo: split naturreservat fastigheter into shifts
+'Todo: do not generate Duplicate Maps 
+'Todo: include byggnader into naturreservat fastigheter
 
 Sub Main()
 	lDebugg = true
@@ -272,9 +276,9 @@ End sub
 
 sub noPa9_Presentation
 	dim commandstring as string
-	,NrNaturSkydd,i,y as integer
+	,NrNaturSkydd,i as integer
 	NrNaturSkydd = 0
-	browse * from ResTabWithObj
+	
 	
 	Dim nWindowID As Integer
 	
@@ -286,37 +290,24 @@ sub noPa9_Presentation
 	   	end if
 	Next
 	commandstring = commandstring & ",FaNoSkift"
-		
-'	print commandstring
+	
+	if lDebugg then
+		print commandstring
+	end if
 	
 	run command commandstring
 	nWindowID = FrontWindow()
-	
 	
 	Set Window nWindowID Enhanced On
 	Set Window nWindowID Front
 	
 	set Map window nWindowID layer 1 Alpha 99 
 	Set Map Window nWindowID Order Layers 1 DestGroupLayer 0 
-	'Set Map Window nWindowID Order Layers 2 DestGroupLayer 0 Position NrNaturSkydd+2
 	Set Map Window nWindowID Layer NrNaturSkydd+2 Display Global Global Pen (1,2,0) Global Brush (2,16777215,16777215)  
 	
-	dim fastighet as string
-	,tempAlias as alias
+	call renameTablesWithColumn("Natur","COl6")
 	
-	for i = 1 to NrNaturSkydd
-		
-		tempAlias = "Natur"&i
-		select COl6 from tempAlias into temp
-		fetch first from temp
-		fastighet = temp.COl1
-		
-		y = i+1 
-		Set Map Window nWindowID Layer y Display Global 
-		Set Map Window nWindowID Layer y Global Pen (1,2,0)
-		Set Map Window nWindowID Layer y Global Brush (2,65280,16777215)
-		Set Map Window nWindowID Layer y FriendlyName fastighet
-	next
+	browse * from ResTabWithObj
 	
 end sub
 
@@ -325,6 +316,27 @@ sub noPa10_GenToExport
 	Select key, iif(distrikt <> "",iif(NaturStatus="",iif((kvFlaggorIsocken>10),iif(distrikt="söder",1,iif(distrikt="norra",2,(IIF(DISTRIKT="MELLERSTA",3,0)))),5),6),0) "värde" from RessultMailsNoObj into ToExport
 	Export "ToExport" Into "C:\Users\crbk01\Desktop\ToExport.csv" Type "ASCII" Delimiter "," CharSet "WindowsLatin1"	
 
+end sub
+
+sub renameTablesWithColumn(byVal enumeratedTablePrefix as string, byVal columnName as string)
+	dim fastighet as string
+	,tempAlias as alias
+	,i,y as integer
+	
+	for i = 1 to NrNaturSkydd
+		
+		tempAlias = enumeratedTablePrefix & i
+		run command "select " & columnName & " from  " & tempAlias & " into newTableName"
+		
+		fetch first from newTableName
+		fastighet = newTableName.COl1
+		
+		y = i+1 
+		Set Map Window nWindowID Layer y Display Global 
+		Set Map Window nWindowID Layer y Global Pen (1,2,0)
+		Set Map Window nWindowID Layer y Global Brush (2,65280,16777215)
+		Set Map Window nWindowID Layer y FriendlyName fastighet
+	next
 end sub
 
 sub noPa11_CleanUp
@@ -347,7 +359,7 @@ end sub
 
 
 sub tableColumnAsArray(byVal tableName as string, byVal kolumnNamn as string,array() as integer)
-	
+	'feels like a genereral enough method to add to CommonMethods
 	dim i as integer
 	, utvald,tempAlias2 as alias
 	
@@ -373,7 +385,7 @@ sub tableColumnAsArray(byVal tableName as string, byVal kolumnNamn as string,arr
 End Sub
 
 function Add_rowid(ByVal TabLeThatWillBeReSavedAsTemp as string) as logical
-	
+	'todo: change syntax for if found then end, gotta be more elegant ways to do this
 	dim q,
 	x as integer,
 	found as logical,
