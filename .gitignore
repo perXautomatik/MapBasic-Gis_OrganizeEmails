@@ -1,8 +1,5 @@
-﻿
-*.ERR
+﻿*.ERR
 *.MBO
 *.MBX
 *.TAB
-OutlookExport.TAB
-OrganiserareFörMailboxen.MBO
-commonLib/*.*
+CommonLib/
