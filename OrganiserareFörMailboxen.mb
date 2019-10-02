@@ -12,19 +12,19 @@ declare sub tableColumnAsArray(byVal tableName as string, byVal kolumnNamn as st
 declare sub renameTablesWithColumn(byVal enumeratedTablePrefix as string, byVal columnName as string)
 
 
-declare sub noPa1_LocaltableOpener
-Declare Sub noPa2_GenResMailsNoObj
-declare sub noPa3_UpdNoFaWithSweref
-declare sub noPa4_GenMailsWiFaObjs
-declare sub noPa5_GenSwerefNrOnFa
-declare sub noPa6_AltResMailsNoObj 
-declare sub noPa5_GenArDisNrSwerBet 
-declare sub noPa5_GenGkFasInx
-declare sub noPa7_GenResWithObj
-declare sub noPa8_GenNaturskyd
-declare sub noPa9_Presentation
-declare sub noPa10_GenToExport	
-declare sub noPa11_CleanUp
+declare sub do1_LocaltableOpener
+Declare Sub do2_GenResMailsNoObj
+declare sub do3_UpdNoFaWithSweref
+declare sub do4_GenMailsWiFaObjs
+declare sub do5_GenSwerefNrOnFa
+declare sub do6_AltResMailsNoObj 
+declare sub do5_GenArDisNrSwerBet 
+declare sub do5_GenGkFasInx
+declare sub do7_GenResWithObj
+declare sub do8_GenNaturskyd
+declare sub do9_Presentation
+declare sub do10_GenToExport	
+declare sub do11_CleanUp
 
 
 
@@ -39,14 +39,14 @@ Global iStartTime,iprogressRange,iprogress as integer
 'Todo: change table names to Follow namingconvention mentioned at https://gis.stackexchange.com/a/231721
 'change: Hungarian~ notation, i for integer, s for string, x for double f for float tbl for table
 'camelCase
-'noParm prefix of methods being run in the progressbar.
+'dorm prefix of methods being run in the progressbar.
 'important to not make methodnamesTo long
 'should methods which alters tables have a certain naming convention? for example (alt)tableName what about multitableAlteration? mAlt?
 'should methods that generate tables be called something? for example (gen)tableName, what about multitableGeneration? mGen?
 'that a table has geoData or not.... wObj/nObj? as sufix
 'old convention with @ seemed bit to confusing
 'should i use Gen as a sufix rather for the sake of allowing reverseSorting
-'executionOrder in methodnamesOfNoParm? example noPa1,noPa2,noPa3
+'executionOrder in methodnamesOfdorm? example do1,do2,do3
 'Todo: consider execution unstoppable or stoppable exectuion, subs can be stopped, function can not.
 'Todo: find preformance bottlenecks, connected to lDebugg variable
 'Todo: trim whitespaces before changing 
@@ -70,32 +70,32 @@ End Sub
 sub progressor()
 	do case iProgress
 		case 1
-			call noPa1_LocaltableOpener
+			call do1_LocaltableOpener
 		case 2
-			call noPa2_GenResMailsNoObj 'tbl_RessultMailsNoObj OutlookExport
+			call do2_GenResMailsNoObj 'tbl_RessultMailsNoObj OutlookExport
 		case 3
-			call noPa3_UpdNoFaWithSweref 'korrigera noPa2_GenResMailsNoObj där det saknad fastighetMedSweref GenObjFaWithSweref
-			call noPa4_GenMailsWiFaObjs 'adds faIndex tbl_MailsWithFaObjects from tbl_RessultMailsNoObj, tbl_FaNoSkift  and tbl_fastighet <> "" 
+			call do3_UpdNoFaWithSweref 'korrigera do2_GenResMailsNoObj där det saknad fastighetMedSweref GenObjFaWithSweref
+			call do4_GenMailsWiFaObjs 'adds faIndex tbl_MailsWithFaObjects from tbl_RessultMailsNoObj, tbl_FaNoSkift  and tbl_fastighet <> "" 
 		case 4
-			call noPa5_GenGkFasInx 'tbl_GkFasIndex MailsWithFaObjects,NatMedFas
+			call do5_GenGkFasInx 'tbl_GkFasIndex MailsWithFaObjects,NatMedFas
 		case 5
-			call noPa5_GenArDisNrSwerBet 'nrKvFlaggot och distrikt tbl_ÄrDisNrSwerBet  from tbl_MailsWithFaObjects, tbl_distriktsindelning
+			call do5_GenArDisNrSwerBet 'nrKvFlaggot och distrikt tbl_ÄrDisNrSwerBet  from tbl_MailsWithFaObjects, tbl_distriktsindelning
 		case 6
-			call noPa6_AltResMailsNoObj 
+			call do6_AltResMailsNoObj 
 							'RessultMailsNoObj 
 								'kvFlaggorIsocken,distrikt ÄrDisNrSwerBet antalSweref
 								'NaturStatus GkFasIndex bedömning
 								'anteckning fastigheter_sweref 				
 		case 7
-			call noPa7_GenResWithObj 'ResTabWithObj
+			call do7_GenResWithObj 'ResTabWithObj
 		case 8
-			call noPa8_GenNaturskyd '@Natur... GkFasIndex 
+			call do8_GenNaturskyd '@Natur... GkFasIndex 
 		case 9
-			call noPa9_Presentation	
+			call do9_Presentation	
 		case 10
-			call noPa10_GenToExport '@ToExport RessultMailsNoObj
+			call do10_GenToExport '@ToExport RessultMailsNoObj
 		case 11
-			call noPa11_CleanUp
+			call do11_CleanUp
 	end case
 			
 	call increment(iProgress,iProgressRange,iStartTime)
@@ -104,7 +104,7 @@ end sub
 
 
 
-sub noPa1_LocaltableOpener
+sub do1_LocaltableOpener
 	'todo: error handling on unable to open table
 	
 	open table tablePath + "NaturreservatMedFastighet.tab" as NatMedFas
@@ -117,7 +117,7 @@ sub noPa1_LocaltableOpener
 	dim cantStopFunctionVariable as logical cantStopFunctionVariable = add_rowId("FaNoSkift")
 end sub
 
-Sub noPa2_GenResMailsNoObj
+Sub do2_GenResMailsNoObj
 	'todo: error handling on uable to create table
 	'todo: checkt that tableTransfere was flawless.
 	'todo: should throw error case EntryId is not unique
@@ -136,7 +136,7 @@ Sub noPa2_GenResMailsNoObj
 	
 End Sub
 
-sub noPa3_UpdNoFaWithSweref
+sub do3_UpdNoFaWithSweref
 	'finds Ärendenr whom has no fastighet
 	'updates column of fastighet if there ärendenr can be found 
 	'someWhat obsolite today as most old ärendenr doesn't correspond to there vision nr due to mbhn
@@ -150,7 +150,7 @@ sub noPa3_UpdNoFaWithSweref
 
 End Sub
 
-sub noPa4_GenMailsWiFaObjs
+sub do4_GenMailsWiFaObjs
 	'generate a table with the fastighetsbeteckningar that's in the inputlist, out of the fastighetstable; MailsWithFaObjects
 	'*.inputlist,FaNoSkift._rowid,FaNoSkift.obj
 	'must be a join for the sake of getting the Geoinfo
@@ -172,7 +172,7 @@ sub noPa4_GenMailsWiFaObjs
 	call görTillBasTabell("MailsWithFaObjects")
 end sub
 
-sub noPa5_GenGkFasInx
+sub do5_GenGkFasInx
 	'generates a KVish table, with EntryId(key), bedömning (val), _rowId (key)
 	'through a join between the tables NatWithFas and MailsWithObj
 	
@@ -183,7 +183,7 @@ sub noPa5_GenGkFasInx
 	
 End Sub
 
-sub noPa5_GenArDisNrSwerBet
+sub do5_GenArDisNrSwerBet
 	'generates a KVish table with EntryId(key), antalSweref (val), district (val)
 	'don't know if i like the aproach of altering district table for the sake of getting the count right
 	'think i'd rather generate a table for that
@@ -217,7 +217,7 @@ sub noPa5_GenArDisNrSwerBet
 	
 End Sub
 
-sub noPa6_AltResMailsNoObj 
+sub do6_AltResMailsNoObj 
 	'populates rather than alter, wonder why i chose to do it like this rather than joining two tables,
 	'besides wasn't there a mails with objects earlier? as i remmeber it, there were some design choise for the sake
 	'of the naturvärdes parts, 
@@ -228,7 +228,7 @@ sub noPa6_AltResMailsNoObj
 	commit table RessultMailsNoObj
 End Sub
 
-sub noPa7_GenResWithObj
+sub do7_GenResWithObj
 	'simple join, and then dumps it into a named temptable
 	Select RessultMailsNoObj.ärendenr,
 		RessultMailsNoObj.anteckning, 
@@ -245,7 +245,7 @@ sub noPa7_GenResWithObj
 	call görTillBasTabell("ResTabWithObj")
 end sub
 
-sub noPa8_GenNaturskyd
+sub do8_GenNaturskyd
 	'method loops through the list of fastigheter,
 	'creates a new table containing one row for each entry, 
 	'todo: why not one query per row instead of one table per entry
@@ -274,7 +274,7 @@ sub noPa8_GenNaturskyd
 		loop		
 End sub
 
-sub noPa9_Presentation
+sub do9_Presentation
 	dim commandstring as string
 	,NrNaturSkydd,i as integer
 	NrNaturSkydd = 0
@@ -311,7 +311,7 @@ sub noPa9_Presentation
 	
 end sub
 
-sub noPa10_GenToExport
+sub do10_GenToExport
 
 	Select key, iif(distrikt <> "",iif(NaturStatus="",iif((kvFlaggorIsocken>10),iif(distrikt="söder",1,iif(distrikt="norra",2,(IIF(DISTRIKT="MELLERSTA",3,0)))),5),6),0) "värde" from RessultMailsNoObj into ToExport
 	Export "ToExport" Into "C:\Users\crbk01\Desktop\ToExport.csv" Type "ASCII" Delimiter "," CharSet "WindowsLatin1"	
@@ -339,7 +339,7 @@ sub renameTablesWithColumn(byVal enumeratedTablePrefix as string, byVal columnNa
 	next
 end sub
 
-sub noPa11_CleanUp
+sub do11_CleanUp
 
 	if not(lDebugg) then
 		close table ÄrDisNrSwerBet

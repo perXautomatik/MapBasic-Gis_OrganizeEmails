@@ -2,4 +2,4 @@
 *.MBO
 *.MBX
 *.TAB
-CommonLib/
+/CommonLib/*.*
