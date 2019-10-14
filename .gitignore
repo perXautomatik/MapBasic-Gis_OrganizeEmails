@@ -1,6 +1,10 @@
 *.ERR
+
 *.MBO
+
 *.MBX
+
 *.TAB
-\commonLib\*.*
+
+CommonLib/
 
