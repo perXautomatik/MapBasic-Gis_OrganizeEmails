@@ -60,7 +60,7 @@ Sub Main()
 	iStartTime = timer()
 	iprogressRange = 11
 	iprogress = 0	
-	tablePath = "G:\sbf\Livsmiljö\Gemensamt\mapbasic program projekt\skikt\Vanliga Tabfiler\"
+	tablePath = "C:\Users\crbk01\OneDrive - Region Gotland\To Vision, GDPR cleanup\MapInfoTables\skikt\Vanliga Tabfiler\"
 ProgressBar "Arbetar... dags att hämta Te"
 	     Calling progressor
 Range iProgressRange
