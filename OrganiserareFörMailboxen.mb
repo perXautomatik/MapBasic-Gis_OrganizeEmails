@@ -231,29 +231,27 @@ sub insertInitialTables(tableKeys() as string, pathListPickedInOrder() as string
 	For folderNr = 1 To ubound(pathListPickedInOrder)
 																		RestartLoop: 
 			For j = 1 To ubound(tablesToOpen)
-				onError goto NotCorrectPath
+
 					pathX = chr$(34) & pathListPickedInOrder(folderNr) & tablesToOpen(j) & ".TAB" & chr$(34)
 					'queryString = "open table " & pathX
 					'run command queryString
 					dim tempLogical as logical tempLogical = openTableAndConfirmByPath(tablesToOpen(j),pathX)
 					
-					if not(tempLogical) then
-						goto TryNextPath
+					if tempLogical then
+							onError goto CouldntClosePath
+								call closeSingleTable(tablesToOpen(j))
+							onError goto 0
+							OnError goto CouldntAddToPathTable
+								queryString = "insert into Pathtable (tablePath,TableName) values (" & pathX & ", " & chr$(34) &  tablesToOpen(j) & chr$(34) & ")"
+								run command	queryString 
+							onError goto 0
+							onError goto couldNotRemoveFromArrayError
+								call removeFromStringArray(tablesToOpen,tablesToOpen(j))
+							onError goto 0
+								Done = (ubound(tablesToopen) = 0)
+								goto RestartLoop
 					End If
-					
-				onError goto 0
-				onError goto CouldntClosePath
-					call closeSingleTable(tablesToOpen(j))
-				onError goto 0
-				OnError goto CouldntAddToPathTable
-					queryString = "insert into Pathtable (tablePath,TableName) values (" & pathX & ", " & chr$(34) &  tablesToOpen(j) & chr$(34) & ")"
-					run command	queryString 
-				onError goto 0
-				onError goto couldNotRemoveFromArrayError
-					call removeFromStringArray(tablesToOpen,tablesToOpen(j))
-				onError goto 0
-					Done = (ubound(tablesToopen) = 0)
-					goto RestartLoop
+								
 				'on success, should restart loop, the tablesToOpen change in size as we remove entries
 				'on fail, increment j, and trye again.
 																					TryNextPath: 
