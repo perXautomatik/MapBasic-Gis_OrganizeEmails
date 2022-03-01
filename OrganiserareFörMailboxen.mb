@@ -1,104 +1,148 @@
 Include "MapBasic.def"
-include "G:\sbf\Livsmiljö\Gemensamt\mapbasic program projekt\CommonLib\commonLib1.def"
+include "commonLib\commonLib1.def"
 
 Declare Sub Main
-Declare Sub GenerateRessultMailsNoObj
-
-declare sub generateGkFasIndex
-declare sub generateÄrDisNrSwerBet 
-declare sub printToFile(byVal tableName as string,byVal pathString as string)
-declare sub presentation()
-declare sub localtableOpener
-declare sub GenerateMailsWithFaObjects
-declare sub cleanup
-declare sub groupBy(byVal tableName as string, byVal kolumnNamn as string)
-declare sub Add_rowid(ByVal tableName as string)
-declare sub tableColumnAsArray(byVal tableName as string, byVal kolumnNamn as string,array() as integer)
 declare sub progressor()
-declare sub LegacyGenerateRessultMailsNoObj
-declare sub genereraNaturskyddslager
-declare sub UpdateRessultMailsNoObj 
-declare sub generateResTabWithObj
-declare sub generateToExport	
-declare sub CorrectGenObjFaWithSweref
-declare sub generateSwerefNrOnFa
+
+declare sub do1_LocaltableOpener
+Declare Sub do2_GenResMailsNoObj
+declare sub do3_UpdNoFaWithSweref
+declare sub do4_GenMailsWiFaObjs
+declare sub do5_GenSwerefNrOnFa
+declare sub do6_AltResMailsNoObj 
+declare sub do5_GenArDisNrSwerBet 
+declare sub do5_GenGkFasInx
+declare sub do7_GenResWithObj
+declare sub do8_GenNaturskyd
+declare sub do9_Presentation
+declare sub do10_GenToExport	
+declare sub do11_CleanUp
 
 
-Global startTime,iprogressRange,iprogress as integer
-,debugg as logical
 
+Global iStartTime,iprogressRange,iprogress as integer
+,lDebugg as logical
+,tablePath as string
+
+'todo: split into separate modules for naturReservat and Sweref count
+'todo: find bug whom ressult in faulty sorting, does not ressult in errorhandling
+'Todo: Compensate for obeus duplicates
+'	? Mark dupes so they're seperatly sorted, as mails
+'Todo: change table names to Follow namingconvention mentioned at https://gis.stackexchange.com/a/231721
+'change: Hungarian~ notation, i for integer, s for string, x for double f for float tbl for table
+'camelCase
+'dorm prefix of methods being run in the progressbar.
+'important to not make methodnamesTo long
+'should methods which alters tables have a certain naming convention? for example (alt)tableName what about multitableAlteration? mAlt?
+'should methods that generate tables be called something? for example (gen)tableName, what about multitableGeneration? mGen?
+'that a table has geoData or not.... wObj/nObj? as sufix
+'old convention with @ seemed bit to confusing
+'should i use Gen as a sufix rather for the sake of allowing reverseSorting
+'executionOrder in methodnamesOfdorm? example do1,do2,do3
+'Todo: consider execution unstoppable or stoppable exectuion, subs can be stopped, function can not.
+'Todo: find preformance bottlenecks, connected to lDebugg variable
+'Todo: trim whitespaces before changing 
+'Todo: Colx translator
+'Todo: split naturreservat fastigheter into shifts
+'Todo: do not generate Duplicate Maps 
+'Todo: include byggnader into naturreservat fastigheter
+'Todo: implement general alternative paths, instead of indevidual.
 
 Sub Main()
-	debugg = false
-	startTime = timer()
+	lDebugg = true
+	iStartTime = timer()
 	iprogressRange = 11
 	iprogress = 0	
+	
 ProgressBar "Arbetar... dags att hämta Te"
 	     Calling progressor
-	'call progressor
 Range iProgressRange
 
-exit sub
-	printErrorNr:
-	call increment(iProgress,iProgressRange,starttime) 'err()
-		end program
 End Sub
 
 sub progressor()
 	do case iProgress
 		case 1
-			call localtableOpener
+			call do1_LocaltableOpener
 		case 2
-			call GenerateRessultMailsNoObj '@RessultMailsNoObj OutlookExport
+			call do2_GenResMailsNoObj 'tbl_RessultMailsNoObj OutlookExport
 		case 3
-			call CorrectGenObjFaWithSweref 'korrigera GenerateRessultMailsNoObj där det saknad fastighetMedSweref GenObjFaWithSweref
-			call GenerateMailsWithFaObjects 'adds faIndex @MailsWithFaObjects from RessultMailsNoObj, FaNoSkift  and fastighet <> "" 
-			call generateSwerefNrOnFa
+			call do3_UpdNoFaWithSweref 'korrigera do2_GenResMailsNoObj där det saknad fastighetMedSweref GenObjFaWithSweref
+			call do4_GenMailsWiFaObjs 'adds faIndex tbl_MailsWithFaObjects from tbl_RessultMailsNoObj, tbl_FaNoSkift  and tbl_fastighet <> "" 
 		case 4
-			call generateGkFasIndex '@GkFasIndex MailsWithFaObjects,NatMedFas
+			call do5_GenGkFasInx 'tbl_GkFasIndex MailsWithFaObjects,NaturreservatMedFastighet
 		case 5
-			call generateÄrDisNrSwerBet 'nrKvFlaggot och distrikt @ÄrDisNrSwerBet  from MailsWithFaObjects, distriktsindelning
+			call do5_GenArDisNrSwerBet 'nrKvFlaggot och distrikt tbl_ÄrDisNrSwerBet  from tbl_MailsWithFaObjects, tbl_distriktsindelning
 		case 6
-			call UpdateRessultMailsNoObj 
+			call do6_AltResMailsNoObj 
 							'RessultMailsNoObj 
 								'kvFlaggorIsocken,distrikt ÄrDisNrSwerBet antalSweref
 								'NaturStatus GkFasIndex bedömning
 								'anteckning fastigheter_sweref 				
 		case 7
-			call generateResTabWithObj 'ResTabWithObj
+			call do7_GenResWithObj 'ResTabWithObj
 		case 8
-			call genereraNaturskyddslager '@Natur... GkFasIndex 
+			call do8_GenNaturskyd '@Natur... GkFasIndex 
 		case 9
-			call presentation	
+			call do9_Presentation	
 		case 10
-			call generateToExport '@ToExport RessultMailsNoObj
+			call do10_GenToExport '@ToExport RessultMailsNoObj
 		case 11
-			call cleanUp
+			call do11_CleanUp
 	end case
 			
-	call increment(iProgress,iProgressRange,starttime)
+	call increment(iProgress,iProgressRange,iStartTime)
 end sub
 
-sub generateSwerefNrOnFa
-	Select MailsWithFaObjects.EntryID, Fastigheter_Sweref.Anteckning from Fastigheter_Sweref, MailsWithFaObjects where Fastigheter_Sweref.obj Within MailsWithFaObjects.obj into SwerefNrOnFa
-end sub
-
-sub CorrectGenObjFaWithSweref
-		
-	select * from RessultMailsNoObj 
-		where RessultMailsNoObj.fastighet = ""
-	into swerefFaKorrigerad 
-		Add Column "swerefFaKorrigerad" (fastighet) 
-			From Fastigheter_Sweref Set To fastighet Where rtrim$(ärendenr) = ärendenr
-
-End Sub
-
-Sub GenerateRessultMailsNoObj
-	Dim printMessage,tempPath,tempstring As String
-	,nrOfSlices,I,RowTwoLenght as integer
-	,tempObject as Object
+couldNotRemoveFromArrayError:
+	print "couldNotRemoveFromArrayError " & folderNr & "_" & j & "_" & error$()
 	
-	'******************* no overwrite ****************************
+	resume TryNextPath
+CouldntAddToPathTable:
+print "CouldntAddToPathTable " & folderNr & "_" & j & "_" & error$()
+	print queryString
+	resume TryNextPath
+CouldntClosePath:
+	print "CouldntClosePath " & folderNr & "_" & j & "_" & error$()
+	print queryString
+	resume TryNextPath
+NotCorrectPath:	
+	resume TryNextPath
+end sub
+
+sub do1_LocaltableOpener
+	dim tableKeys(5),pathListPickedInOrder(7) as string
+
+		pathListPickedInOrder(1) = "G:\sbf\Livsmiljö\Gemensamt\mapbasic program projekt\skikt\Vanliga Tabfiler\"
+		pathListPickedInOrder(2) = "G:\sbf\Livsmiljö\Miljö- och hälsoskydd\Vatten\Avlopp\Klart Vatten\Fastigheter\GIS\"
+		pathListPickedInOrder(3) = "C:\Users\crbk01\OneDrive - Region Gotland\To Vision, GDPR cleanup\MapInfoTables\skikt\Vanliga Tabfiler\"
+		pathListPickedInOrder(4) = "C:\Users\crbk01\OneDrive - Region Gotland\Till Github\Mapinfo\MapInfoTabToCsv\Tab-sweref\"
+		pathListPickedInOrder(5) = "C:\Users\crbk01\OneDrive - Region Gotland\Till Github\Mapinfo\MapInfoTabToCsv\Tab-Bygg_Fastigheter\"
+		pathListPickedInOrder(6) = "C:\Users\crbk01\OneDrive - Region Gotland\Till Github\Mapinfo\MapInfoTabToCsv\AVLOPP_RENING_ENSKILT\"
+		pathListPickedInOrder(7) = ApplicationDirectory$()
+		
+		tableKeys(1) = "NaturreservatMedFastighet" 
+		tableKeys(2) = "distriktsindelning"
+		tableKeys(3) = "NaturreservatGtlkusten_NVK" 'as visiual aid mapp
+		tableKeys(4) = "FastighetUtanSkifte"
+		tableKeys(5) = "Fastigheter_Sweref.TAB"
+		
+	
+	call do1_1_genPathTab
+	
+	call insertInitialTables(tableKeys, pathListPickedInOrder)
+	call tableOpener(tableKeys)
+	
+	dim cantStopFunctionVariable as logical cantStopFunctionVariable = add_rowId("FastighetUtanSkifte")
+end sub
+
+Sub do2_GenResMailsNoObj
+	'todo: error handling on uable to create table
+	'todo: checkt that tableTransfere was flawless.
+	'todo: should throw error case EntryId is not unique
+	'could generate the table again with longer EntryID char value unitill they're unique.
+	
+	Dim printMessage,tempPath,tempstring As String ,nrOfSlices,I,RowTwoLenght as integer ,tempObject as Object
 	
 	Register Table "C:\Users\crbk01\Desktop\Ansökningar, ej sorterade.txt" TYPE ASCII Delimiter 126 Charset "WindowsLatin1" Into applicationDirectory$() & "\OutlookExport.TAB"
 	Open Table applicationDirectory$() & "\OutlookExport.TAB" Interactive
@@ -108,9 +152,103 @@ Sub GenerateRessultMailsNoObj
 	Insert Into RessultMailsNoObj (ärendenr,fastighet,key,EntryId) Select COl2,COL3,COl1,left$(right$(COl1,9),5)
 	From OutlookExport DropIndex Auto
 	commit table RessultMailsNoObj
+	
 End Sub
 
-sub generateResTabWithObj
+sub do3_UpdNoFaWithSweref
+	'finds Ärendenr whom has no fastighet
+	'updates column of fastighet if there ärendenr can be found 
+	'someWhat obsolite today as most old ärendenr doesn't correspond to there vision nr due to mbhn
+	select * from RessultMailsNoObj 
+		where RessultMailsNoObj.fastighet = ""
+	into swerefFaKorrigerad 
+		Add Column "swerefFaKorrigerad" (fastighet) 
+			From Fastigheter_Sweref Set To fastighet Where rtrim$(ärendenr) = ärendenr
+	
+	Commit Table RessultMailsNoObj
+
+End Sub
+
+sub do4_GenMailsWiFaObjs
+	'generate a table with the fastighetsbeteckningar that's in the inputlist, out of the fastighetstable; MailsWithFaObjects
+	'*.inputlist,FastighetUtanSkifte._rowid,FastighetUtanSkifte.obj
+	'must be a join for the sake of getting the Geoinfo
+	'shouldProbably groupTable before we assign astighetsObj.. discards mails that has same fastighet... maybe not that good
+	
+	Alter Table "RessultMailsNoObj" ( add tomtHeltal Integer ) 'way to sneak around mapbasics inability to make anything than inner joins
+			
+	Select RessultMailsNoObj.ärendenr,RessultMailsNoObj.fastighet,RessultMailsNoObj.EntryID,FastighetUtanSkifte._rowid from
+  	RessultMailsNoObj,FastighetUtanSkifte 
+  	where FastighetUtanSkifte.KIR like "%" & RessultMailsNoObj.fastighet
+  		AND RessultMailsNoObj.tomtHeltal = FastighetUtanSkifte.tomtHeltal
+	into MailsWithFaObjects 
+			
+	if TableInfo(MailsWithFaObjects,TAB_INFO_NROWS) <> TableInfo(RessultMailsNoObj,TAB_INFO_NROWS) then 'crued error check method, 
+		print "[Error] different size of input and output table, Debugg turned 'True'"
+		lDebugg = true
+	end if
+		
+	call görTillBasTabell("MailsWithFaObjects")
+end sub
+
+sub do5_GenGkFasInx
+	'generates a KVish table, with EntryId(key), bedömning (val), _rowId (key)
+	'through a join between the tables NatWithFas and MailsWithObj
+	
+	Select EntryID,bedömning,_rowid
+	from MailsWithFaObjects,NaturreservatMedFastighet
+	where NaturreservatMedFastighet.kir = MailsWithFaObjects.fastighet
+	into GkFasIndex
+	
+End Sub
+
+sub do5_GenArDisNrSwerBet
+	'generates a KVish table with EntryId(key), antalSweref (val), district (val)
+	'don't know if i like the aproach of altering district table for the sake of getting the count right
+	'think i'd rather generate a table for that
+	'need to create another table to count the flaggs, feels like this is a safer method though
+	'the ressulting table doesn't need any geoInfo
+	
+	dim tempPath as string tempPath = createTemporaryTableAndOpen("""ÄrDisNrSwerBet"" (EntryID Char(5),antalSweref Integer,distrikt Char(50))")  
+	tempPath = createTemporaryTableAndOpen("""KV_SockNrSweref"" (Socken Char(50),antalSweref Integer)")  
+	tempPath = createTemporaryTableAndOpen("""KV_FastSwerefAntec"" (fastighet Char(50),anteckning Char(256))")  
+	
+	Create Map For KV_SockNrSweref CoordSys Earth Projection 1, 104
+	Create Map For KV_FastSwerefAntec CoordSys Earth Projection 1, 104
+	Create Map For ÄrDisNrSwerBet CoordSys Earth Projection 1, 104
+	
+	Insert Into KV_FastSwerefAntec (COL1) Select COL2 from MailsWithFaObjects
+	Add Column "KV_FastSwerefAntec" (anteckning)From Fastigheter_Sweref Set To anteckning Where within 'flaggor som finns specifict på fastigheten
+	
+	
+	Insert Into KV_SockNrSweref (Socken) Select Socken From distriktsindelning
+	Add Column "KV_SockNrSweref" (antalSweref)From Fastigheter_Sweref Set To Count(*) Where within 'flaggor som finns specifickt på socknen.
+	
+	Insert Into ÄrDisNrSwerBet (EntryID) Select EntryID From MailsWithFaObjects
+	
+	select EntryID,distrikt from distriktsindelning,MailsWithFaObjects where distriktsindelning.Obj contains MailsWithFaObjects.Obj into relevantDistrict
+	Add Column "ÄrDisNrSwerBet" (distrikt)From relevantDistrict Set To distrikt Where Col1 = Col1
+		
+	Add Column "ÄrDisNrSwerBet" (antalSweref)From KV_SockNrSweref Set To antalSweref Where contains
+	
+	commit table ÄrDisNrSwerBet
+	Create Index On ÄrDisNrSwerBet (EntryID)
+	
+End Sub
+
+sub do6_AltResMailsNoObj 
+	'populates rather than alter, wonder why i chose to do it like this rather than joining two tables,
+	'besides wasn't there a mails with objects earlier? as i remmeber it, there were some design choise for the sake
+	'of the naturvärdes parts, 
+	Add Column "RessultMailsNoObj" (kvFlaggorIsocken)From ÄrDisNrSwerBet Set To antalSweref Where COL2 = COL1
+	Add Column "RessultMailsNoObj" (distrikt)From ÄrDisNrSwerBet Set To distrikt Where COL2 = COL1 
+	Add Column "RessultMailsNoObj" (NaturStatus )From GkFasIndex Set To bedömning Where COL2 = COL1 
+	Add Column "RessultMailsNoObj" (anteckning)From KV_FastSwerefAntec Set To Anteckning Where COL2 = COL1 
+	commit table RessultMailsNoObj
+End Sub
+
+sub do7_GenResWithObj
+	'simple join, and then dumps it into a named temptable
 	Select RessultMailsNoObj.ärendenr,
 		RessultMailsNoObj.anteckning, 
 		RessultMailsNoObj.kvFlaggorIsocken,
@@ -118,26 +256,22 @@ sub generateResTabWithObj
 		RessultMailsNoObj.distrikt,
 		RessultMailsNoObj.fastighet, 
 		RessultMailsNoObj.EntryID,
-		FaNoSkift._rowid "_rowid", 
-		FaNoSkift.obj
-	from RessultMailsNoObj,FaNoSkift
-	where FaNoSkift.KIR = RessultMailsNoObj.fastighet 
+		FastighetUtanSkifte._rowid "_rowid", 
+		FastighetUtanSkifte.obj
+	from RessultMailsNoObj,FastighetUtanSkifte
+	where FastighetUtanSkifte.KIR = RessultMailsNoObj.fastighet 
 	into ResTabWithObj
 	call görTillBasTabell("ResTabWithObj")
 end sub
 
-sub UpdateRessultMailsNoObj 
-	Add Column "RessultMailsNoObj" (kvFlaggorIsocken)From ÄrDisNrSwerBet Set To antalSweref Where COL2 = COL1
-	Add Column "RessultMailsNoObj" (distrikt)From ÄrDisNrSwerBet Set To distrikt Where COL2 = COL1 
-	Add Column "RessultMailsNoObj" (NaturStatus )From GkFasIndex Set To bedömning Where COL2 = COL1 
-	Add Column "RessultMailsNoObj" (anteckning)From SwerefNrOnFa Set To Anteckning Where COL2 = COL1 
-	commit table RessultMailsNoObj
-End Sub
-
-sub genereraNaturskyddslager
+sub do8_GenNaturskyd
+	'method loops through the list of fastigheter,
+	'creates a new table containing one row for each entry, 
+	'todo: why not one query per row instead of one table per entry
+	'todo: why not a join with the ressult table so one sees what one selects?
+	'GkFasIndex, is a kv table as i remmeber, with rowNumber and fastighetsNamn
 	
-	dim x,num_tables as integer
-	,tempstrings,query as string
+	dim x,num_tables as integer,tempstrings,query as string
 	x=1 fetch first from GkFasIndex
 		do until EOT(GkFasIndex)
 			
@@ -159,8 +293,262 @@ sub genereraNaturskyddslager
 		loop		
 End sub
 
-sub tableColumnAsArray(byVal tableName as string, byVal kolumnNamn as string,array() as integer)
+
+sub do10_GenToExport
+
+	Select key, iif(distrikt <> "",iif(NaturStatus="",iif((kvFlaggorIsocken>10),iif(distrikt="söder",1,iif(distrikt="norra",2,(IIF(DISTRIKT="MELLERSTA",3,0)))),5),6),0) "värde" from RessultMailsNoObj into ToExport
+	Export "ToExport" Into "C:\Users\crbk01\Desktop\ToExport.csv" Type "ASCII" Delimiter "," CharSet "WindowsLatin1"	
+
+end sub
+sub do11_CleanUp
+
+	if not(lDebugg) then
+		close table ÄrDisNrSwerBet
+		Close Table Fastigheter_Sweref
+		close table GkFasIndex
+		close table NaturreservatMedFastighet
+		
+		close table distriktsindelning
+		close table FastighetUtanSkifte 
+		close table OutlookExport
+		close table RessultMailsNoObj
+		close table MailsWithFaObjects
+		close table swerefFaKorrigerad
+	end if
+end sub
+declare function Add_rowid(ByVal tableName as string) as logical
+
+declare sub dedupeIntoTemp(byVal tableName as string, byVal kolumnNamn as string)
+declare sub printToFile(byVal tableName as string,byVal pathString as string)
+declare sub tableColumnAsArray(byVal tableName as string, byVal kolumnNamn as string,array() as integer)
+declare sub renameTablesWithColumn(byVal enumeratedTablePrefix as string, byVal columnName as string)
+declare sub insertInitialTables(tableKeys() as string, pathListPickedInOrder() as string)
+declare sub do1_1_genPathTab
+declare function openTableAndConfirmByPath(byval toOpen as string,byVal filePath as string) as logical
+
+sub do1_1_genPathTab
+	dim tempstring,commandX,tempFileName as string
+	tempstring = "PathTABLE"
+	if IsTableOpen(tempstring) then close table "pathTable" end if
+	tempFileName = TempFileName$("")
+	commandX = "CREATE TABLE PathTABLE (tableName Char(40),tablePath Char(256),alternative Char(40)) File """ & tempFileName & """"
+	onError goto printPath
+		run command commandX
+	onError goto 0
 	
+exit sub
+	printPath:
+	print commandx 
+	print error$()
+	end program
+end sub
+
+'insert tables keys
+'insted of individually provide alternative path to each folder, instead you simply give a general path for each table
+'does not work with tables who have other name than there initial file. how do we fix that?
+
+function openTableAndConfirmByPath(byval toOpen as string,byVal filePath as string) as logical
+	dim alternativeName,tpA(1) as string, debug as logical					
+
+	debug = false
+	if IsTableOpen(toOpen) then
+		if debug then print "alreadyOpenError" end if
+		goto alreadyOpenError
+	else 'the table isn't open
+		if debug then print "Notalready" end if
+
+		if false then 'there is no row entry
+		else
+			if debug then print "row entry" end if
+		
+			if (isPathOpen(filePath)) then
+				if debug then print "path is open elsewhereError" end if
+				goto PathAlreadyOpenedError 'path is open elsewhere			
+			end if	
+				openStep:
+				if debug then print "openStep" end if
+				
+				onError goto ErrorOpeningErorr
+					Open Table filePath as toOpen
+				onError goto 0
+			
+				if(TableIsNotOpen(toOpen)) then 
+					if debug then print "the table is not open, resorting to alternative" end if
+					alternativeName = ""
+					if alternativeName = "" then	'eather overwrite alternative path or send noalternativeerror2
+						if debug then print "no alternative" end if
+						goto NoAlternativeError2
+					else
+						if true then  'open alternative reference
+							if debug then print "tryed open with recursion, but failed" end if
+							goto NoAlternativeError3
+						else	'if it did succeede to open the alternative path
+							if debug then print "succeede to open the alternative path" end if
+							OnError goto UnAbleToCreateError
+								Commit Table tpA(1) As filePath TYPE NATIVE Charset "WindowsLatin1" 'copies alternativeTable in the spot of original name
+								close table tpA(1) 'make sure alternativeName table is closed, copie will open later
+							OnError goto 0
+							goto openStep
+						end if
+					end if
+				end if
+		end if
+	end if
+		
+	if(TableIsNotOpen(toOpen)) then 
+		goto OpenFailerror 'table is not open
+	else
+		openTableAndConfirmByPath = true
+	end if		
+	
+	endFunction:
+	call closeSingleTable("pathTableRefference")
+exit function
+OpenFailerror:
+	print "[Error_openTableAndConfirmByPath] Failed to open table from specified path; " & filePath & " with specified name; " & toOpen
+	openTableAndConfirmByPath = false
+	goto endFunction
+tableNamerror:
+	print "[Error_openTableAndConfirmByPath] No table avialable with specified name; " & toOpen
+	openTableAndConfirmByPath = false
+	goto endFunction
+PathAlreadyOpenedError:
+	print "[warning_openTableAndConfirmByPath] Path " & filePath & " was opened under another name: " & tableNameByPath(toOpen)
+	goto openStep
+alreadyOpenError:
+	print "[Warning_openTableAndConfirmByPath] name specified is already open; " & toOpen 
+	openTableAndConfirmByPath = true
+	goto endFunction
+ErrorOpeningErorr:
+	print "[warning_openTableAndConfirmByPath] specified path was invalid; " & filePath
+	resume next
+NoAlternativeError2:
+	print "[Error_openTableAndConfirmByPath] Alternative doesn't exist for path; " & filePath
+	openTableAndConfirmByPath = false
+	goto endFunction
+NoAlternativeError3:
+	print "[Error_openTableAndConfirmByPath] Failed to open alternative path"
+	openTableAndConfirmByPath = false
+	goto endFunction
+UnAbleToCreateError:
+	print "[Error_openTableAndConfirmByPath] Unable To create alternative" & alternativeName & "||"  & error$()
+	openTableAndConfirmByPath = false
+	goto endFunction
+End function
+
+sub insertInitialTables(tableKeys() as string, pathListPickedInOrder() as string)
+		
+	dim Done as logical
+	,folderNr,j,y as integer
+	,tablesToOpen(),queryString,pathX as string
+	queryString = ""
+	
+	for y=1 to ubound(tableKeys)
+		redim tablesToOpen(y)
+		tablesToOpen(y) = tableKeys(y)
+	next
+	
+	'maximum pathListPickedInOrder x tablesToOpen
+	'minimum tablesToOpen
+	For folderNr = 1 To ubound(pathListPickedInOrder)
+																		RestartLoop: 
+			For j = 1 To ubound(tablesToOpen)
+
+					pathX = chr$(34) & pathListPickedInOrder(folderNr) & tablesToOpen(j) & ".TAB" & chr$(34)
+					'queryString = "open table " & pathX
+					'run command queryString
+					dim tempLogical as logical tempLogical = openTableAndConfirmByPath(tablesToOpen(j),pathX)
+					
+					if tempLogical then
+							onError goto CouldntClosePath
+								call closeSingleTable(tablesToOpen(j))
+							onError goto 0
+							OnError goto CouldntAddToPathTable
+								queryString = "insert into Pathtable (tablePath,TableName) values (" & pathX & ", " & chr$(34) &  tablesToOpen(j) & chr$(34) & ")"
+								run command	queryString 
+							onError goto 0
+							onError goto couldNotRemoveFromArrayError
+								call removeFromStringArray(tablesToOpen,tablesToOpen(j))
+							onError goto 0
+								Done = (ubound(tablesToopen) = 0)
+								goto RestartLoop
+					End If
+								
+				'on success, should restart loop, the tablesToOpen change in size as we remove entries
+				'on fail, increment j, and trye again.
+																					TryNextPath: 
+				'on end of j, trye next folder. reset j, but only as long as done is not set true
+			next
+			if done then 'then can eather happen due to out of paths or by finding each key
+				exit sub
+			end if
+	next
+	
+	print StringArrayAsString(tablesToOpen)
+
+exit sub
+
+sub do9_Presentation
+	dim commandstring as string
+	,NrNaturSkydd,i as integer
+	NrNaturSkydd = 0
+	
+	
+	Dim nWindowID As Integer
+	
+	commandstring = "Map From NaturreservatGtlkusten_NVK"
+	For i = 1 to NumTables()
+		if like(Tableinfo(i, TAB_INFO_NAME), "Natur_","") then
+	    	commandstring = commandstring & "," & Tableinfo(i, TAB_INFO_NAME)
+	    	NrNaturSkydd = NrNaturSkydd+1
+	   	end if
+	Next
+	commandstring = commandstring & ",FastighetUtanSkifte"
+	
+	if lDebugg then
+		print commandstring
+	end if
+	
+	run command commandstring
+	nWindowID = FrontWindow()
+	
+	Set Window nWindowID Enhanced On
+	Set Window nWindowID Front
+	
+	set Map window nWindowID layer 1 Alpha 99 
+	Set Map Window nWindowID Order Layers 1 DestGroupLayer 0 
+	Set Map Window nWindowID Layer NrNaturSkydd+2 Display Global Global Pen (1,2,0) Global Brush (2,16777215,16777215)  
+	
+	call renameTablesWithColumn("Natur","COl6")
+	
+	browse * from ResTabWithObj
+	
+end sub
+
+sub renameTablesWithColumn(byVal enumeratedTablePrefix as string, byVal columnName as string)
+	dim fastighet as string
+	,tempAlias as alias
+	,i,y as integer
+	
+	for i = 1 to NrNaturSkydd
+		
+		tempAlias = enumeratedTablePrefix & i
+		run command "select " & columnName & " from  " & tempAlias & " into newTableName"
+		
+		fetch first from newTableName
+		fastighet = newTableName.COl1
+		
+		y = i+1 
+		Set Map Window nWindowID Layer y Display Global 
+		Set Map Window nWindowID Layer y Global Pen (1,2,0)
+		Set Map Window nWindowID Layer y Global Brush (2,65280,16777215)
+		Set Map Window nWindowID Layer y FriendlyName fastighet
+	next
+end sub
+
+
+sub tableColumnAsArray(byVal tableName as string, byVal kolumnNamn as string,array() as integer)
+	'feels like a genereral enough method to add to CommonMethods
 	dim i as integer
 	, utvald,tempAlias2 as alias
 	
@@ -185,12 +573,14 @@ sub tableColumnAsArray(byVal tableName as string, byVal kolumnNamn as string,arr
 		
 End Sub
 
-sub Add_rowid(ByVal TabLeThatWillBeReSavedAsTemp as string)
+function Add_rowid(ByVal TabLeThatWillBeReSavedAsTemp as string) as logical
+	'todo: change syntax for if found then end, gotta be more elegant ways to do this
+	dim q,
+	x as integer,
+	found as logical,
+	tempString as string,
+	tempAlias as alias
 	
-	dim q,x as integer
-	, found as logical
-	, tempString as string
-	, tempAlias as alias
 	found = false
 	tempString = "_rowid"
 	tempAlias = TabLeThatWillBeReSavedAsTemp
@@ -211,231 +601,45 @@ sub Add_rowid(ByVal TabLeThatWillBeReSavedAsTemp as string)
 	end if
 		
 	call görTillBasTabell(TabLeThatWillBeReSavedAsTemp)
-	
-end sub
+	Add_rowid = true
+end function
 
-sub GenerateMailsWithFaObjects
-	Commit Table RessultMailsNoObj
-	Alter Table "RessultMailsNoObj" ( add tomtHeltal Integer )
-	
-Select RessultMailsNoObj.ärendenr,
-  RessultMailsNoObj.fastighet, 
-  RessultMailsNoObj.EntryID,
-  _rowid from 
-  RessultMailsNoObj, 
-  FaNoSkift 
-  where FaNoSkift.KIR like "%" & RessultMailsNoObj.fastighet AND RessultMailsNoObj.tomtHeltal = FaNoSkift.tomtHeltal
-
-	into MailsWithFaObjects
-
-		
-		
-	if TableInfo(MailsWithFaObjects,TAB_INFO_NROWS) <> TableInfo(RessultMailsNoObj,TAB_INFO_NROWS) then
-		print "[Error] different size of input and output table"
-		debugg = true
-	end if
-	
-	call görTillBasTabell("MailsWithFaObjects")
-end sub
-
-sub presentation()
-	dim commandstring as string
-	,NrNaturSkydd,i,y as integer
-	NrNaturSkydd = 0
-	browse * from ResTabWithObj
-	
-	Dim nWindowID As Integer
-	
-	commandstring = "Map From NaturreservatGtlkusten_NVK"
-	For i = 1 to NumTables()
-		if like(Tableinfo(i, TAB_INFO_NAME), "Natur_","") then
-	    	commandstring = commandstring & "," & Tableinfo(i, TAB_INFO_NAME)
-	    	NrNaturSkydd = NrNaturSkydd+1
-	   	end if
-	Next
-	commandstring = commandstring & ",FaNoSkift"
-		
-'	print commandstring
-	
-	run command commandstring
-	nWindowID = FrontWindow()
-	
-	
-	Set Window nWindowID Enhanced On
-	Set Window nWindowID Front
-	
-	set Map window nWindowID layer 1 Alpha 99 
-	Set Map Window nWindowID Order Layers 1 DestGroupLayer 0 
-	'Set Map Window nWindowID Order Layers 2 DestGroupLayer 0 Position NrNaturSkydd+2
-	Set Map Window nWindowID Layer NrNaturSkydd+2 Display Global Global Pen (1,2,0) Global Brush (2,16777215,16777215)  
-	
-	dim fastighet as string
-	,tempAlias as alias
-	
-	for i = 1 to NrNaturSkydd
-		
-		tempAlias = "Natur"&i
-		select COl6 from tempAlias into temp
-		fetch first from temp
-		fastighet = temp.COl1
-		
-		y = i+1 
-		Set Map Window nWindowID Layer y Display Global 
-		Set Map Window nWindowID Layer y Global Pen (1,2,0)
-		Set Map Window nWindowID Layer y Global Brush (2,65280,16777215)
-		Set Map Window nWindowID Layer y FriendlyName fastighet
-	next
-	
-end sub
-
-sub groupBy(byVal tableNameWhoHasTHe_RowidCOlumn as string, byVal kolumnNamn as string)
+sub dedupeIntoTemp(byVal tableNameWhoHasTHe_RowidCOlumn as string, byVal kolumnNamn as string)
+'attempts to make a grouping of objects while mainting the ressulting grafic 
+'does normaly not work, so the method makes a copy of the table, asignes each row id, 
+' then group by provided column namn, and make a new table from original source, where it selects each row
+' with the rowid provided when making the select, the geo object is intanct and you could say that the grouping was made witout loss
+' it would probably be more correct to call the method, dedupeIntoTemp, as group by could be asumed, that the graphical objects should be merged, 
+' this mearly pick one object with each distinguished column value.
 
 	dim tempAlias,tempAlias2 as string
 	tempAlias = tableNameWhoHasTHe_RowidCOlumn
 	tempAlias2 = kolumnNamn
-'	run command ("Create Index On " & tableNameWhoHasTHe_RowidCOlumn & "(" & kolumnNamn & ")")
-	call updateIndex(tableNameWhoHasTHe_RowidCOlumn)
-	'run command ("Create Index On " & tableNameWhoHasTHe_RowidCOlumn & "(_rowid)")
 
-	select * from tableNameWhoHasTHe_RowidCOlumn group by tempAlias2 into tabellUtanGrafik
-	call görTillbastabell(tabellUtanGrafik)
+	call updateIndex(tableNameWhoHasTHe_RowidCOlumn) 'makes sure index is in the table provided
+
+	select * from tableNameWhoHasTHe_RowidCOlumn group by tempAlias2 into tabellUtanGrafik 'makes the object destroying groupBy
 	
-	'end program
-
-	run command ("select " & getColumnsOfTable_asString(tableNameWhoHasTHe_RowidCOlumn) & " from " & tableNameWhoHasTHe_RowidCOlumn & ",tabellUtanGrafik where " & tableNameWhoHasTHe_RowidCOlumn & "._rowid = tabellUtanGrafik._rowid  into withGrafik")
-
-	'select * from tableNameWhoHasTHe_RowidCOlumn where _rowid  = any (select _rowid from tabellUtanGrafik) into withGrafik
+	call görTillbastabell(tabellUtanGrafik) 'stores result as temporary table and closes original
 	
-	call görTillBastabell("withGrafik")
-	close table tableNameWhoHasTHe_RowidCOlumn
-	close table tabellUtanGrafik
-	select * from withGrafik into tableNameWhoHasTHe_RowidCOlumn
-	call görTillBastabell(tableNameWhoHasTHe_RowidCOlumn) run command ("Create Index On " & tableNameWhoHasTHe_RowidCOlumn & "(" & kolumnNamn & ")") 
-	commit table tableNameWhoHasTHe_RowidCOlumn
+	run command ("select " & getColumnsOfTable_asString(tableNameWhoHasTHe_RowidCOlumn) & 
+	" from " & tableNameWhoHasTHe_RowidCOlumn & 
+	",tabellUtanGrafik where " & tableNameWhoHasTHe_RowidCOlumn & "._rowid = tabellUtanGrafik._rowid  into withGrafik") 'makes a join of the original table and the new temporary table without objects
+	
+	call görTillBastabell("withGrafik") 'the ressulting table is stored as a temporary table, and the join is discarded.
+
+	close table tableNameWhoHasTHe_RowidCOlumn 'cleanup
+	close table tabellUtanGrafik 'cleanup
+	select * from withGrafik into tableNameWhoHasTHe_RowidCOlumn 'renaming ressult table to take the place of initial table
+	
+	call görTillBastabell("tableNameWhoHasTHe_RowidCOlumn") 'sames the table in new name
 	close table withGrafik
 	
+	run command ("Create Index On " & tableNameWhoHasTHe_RowidCOlumn & "(" & kolumnNamn & ")") 'makes sure that the index now reflect the new item density after deduping.
+
+	commit table tableNameWhoHasTHe_RowidCOlumn
+
 End Sub
-
-sub LegacyGenerateRessultMailsNoObj
-	Dim printMessage,tempPath,tempstring As String
-	,nrOfSlices,I,RowTwoLenght as integer
-	,tempObject as Object
-	
-	tempstring = "ResTabWithObj"
-	if not(TableIsNotOpen(tempstring)) then
-		note "saving to file"
-		commit table ResTabWithObj
-		call printToFile(tempstring,appDir + "OutlookExport.txt")
-		close table ResTabWithObj
-	end if
-
-	Register Table appDir & "\OutlookExport.txt"  TYPE ASCII Delimiter 9 Charset "WindowsLatin1" Into appDir & "\OutlookExport.TAB"
-	Open Table appDir & "\OutlookExport.TAB" Interactive
-	
-	
-	tempPath = createTemporaryTableAndOpen("""RessultMailsNoObj"" (ärendenr Char(13),fastighet char(50),EntryID Char(150),distrikt Char(40),antalSweref integer)")
-
-	Select * from OutlookExport 
-		where (_COL1 like "%MBNV%" OR _COL1 like "%mhn%")			
-				or 
-				(((_COL2 like "%mhn%") OR (_COL2 like "%MBNV%")) and (not ( _COL2 = "registrator-mhn@gotland.se" )))
-			
-			into RaderMedMHN
-	
-	call görTillBasTabell("RaderMedMHN")
-
-	Fetch First From RaderMedMHN
-	Do Until EOT(RaderMedMHN)
-		dim mhnArray(0),columnsMerged,fastighetsArray(0),insertValue,insertValue2,fastighet as string
-		, nrOfPotentialFastigheter,pos as integer
-		
-		insertValue = ""
-		insertValue2 = ""
-		fastighet = ""
-	
-		nrOfPotentialFastigheter = 0
-	
-		columnsMerged = RaderMedMHN.col1 + " " + RaderMedMHN.col2 'merge col1&col2
-		
-		nrOfSlices = SplitStringAtCharacter(columnsMerged," ",mhnArray)
-		nrOfPotentialFastigheter = SplitStringAtCharacter(columnsMerged,", ",fastighetsArray)
-		
-		if(nrOfPotentialFastigheter > 1) then
-			dim  j as integer
-			
-			for j = 1 to nrOfPotentialFastigheter
-				if StringContains(fastighetsArray(j), ":") and not(StringContains(fastighetsArray(j), "Ämne:")) then
-					fastighet = fastighetsArray(j)
-				end if	
-			Next
-			
-			if(left$(fastighet,1) = " ") then 'fastighetsextrahering
-				fastighet = right$(fastighet,len(fastighet)-1)
-			end if
-			
-			pos = InStr(1,fastighet,"Nytt ")	
-			if (pos > 0) then
-				fastighet = Mid$(fastighet,1,pos-1)			
-			end if				
-		end if
-		
-		For I=1 to nrOfSlices
-			Dim TempBoolean as logical
-	
-			TempBoolean = StringContains(mhnArray(I), "MBNV") AND ( 'logical validation: if line contain mhn and number
-					 StringContains(mhnArray(I), "0") OR
-					 StringContains(mhnArray(I), "1") OR
-					 StringContains(mhnArray(I), "2") OR
-					 StringContains(mhnArray(I), "3") OR
-					 StringContains(mhnArray(I), "4") OR
-					 StringContains(mhnArray(I), "5") OR
-					 StringContains(mhnArray(I), "6") OR
-					 StringContains(mhnArray(I), "7") OR
-					 StringContains(mhnArray(I), "8") OR
-					 StringContains(mhnArray(I), "9")
-				 ) OR
-				 StringContains(mhnArray(I), "MHN") AND ( 'logical validation: if line contain mhn and number
-					 StringContains(mhnArray(I), "0") OR
-					 StringContains(mhnArray(I), "1") OR
-					 StringContains(mhnArray(I), "2") OR
-					 StringContains(mhnArray(I), "3") OR
-					 StringContains(mhnArray(I), "4") OR
-					 StringContains(mhnArray(I), "5") OR
-					 StringContains(mhnArray(I), "6") OR
-					 StringContains(mhnArray(I), "7") OR
-					 StringContains(mhnArray(I), "8") OR
-					 StringContains(mhnArray(I), "9")
-				 )
-			 
-			 if TempBoolean then
-			 	dim år,diarie,ärendeDelar() as string
-			 	,delar as integer
-			 	
-			 	delar = SplitStringAtCharacter(mhnArray(I),"-",ärendeDelar)
-				if(delar = 3) then
-					insertValue = ärendeDelar(1) & " " & val(ärendeDelar(2)) & "/" & val(ärendeDelar(3))		
-					insertvalue2 = mhnArray(I)
-				else
-					insertValue = ""
-				end if
-			end if
-		Next
-		
-		if(insertValue <> "") then
-			if(fastighet <> "") then
-				insert into RessultMailsNoObj values (insertValue,fastighet,insertValue2) 			
-			elseif(fastighet = "") then
-				insert into RessultMailsNoObj (ärendenr,EntryID) values (insertValue,insertValue2) 
-			end if
-		end if
-		
-		redim fastighetsArray(0)
-		redim mhnArray(0)
-		
-		Fetch Next From RaderMedMHN
-	Loop	
-
-end Sub
 
 sub printToFile(byVal tableName as string,byVal pathString as string)
 
@@ -450,69 +654,3 @@ sub printToFile(byVal tableName as string,byVal pathString as string)
 Loop
 Close File #1
 End Sub
-
-sub localtableOpener
-
-	dim tempstring as String
-
-	tempstring = "G:\sbf\Livsmiljö\Gemensamt\mapbasic program projekt\skikt\Vanliga Tabfiler\"
-	
-	open table tempstring + "NaturreservatMedFastighet.tab" as NatMedFas
-	Open Table tempstring + "distriktsindelning.TAB"
-	Open Table tempstring + "\NaturreservatGtlkusten_NVK.TAB" 'as visiual aid mapp
-	Open Table tempstring + "\FastighetUtanSkifte.TAB" as FaNoSkift 
-
-	tempstring = "G:\sbf\Livsmiljö\Miljö- och hälsoskydd\Vatten\Avlopp\Klart Vatten\"
-	Open Table tempstring + "Fastigheter\GIS\Fastigheter_Sweref.TAB"
-	
-	
-	'open table "K:\KARTOR\LANTMÄTERIET\FASTIGHETSKARTAN\Fastighet_yta.TAB" as Fastighet_ytaORg
-
-	call add_rowId("FaNoSkift") 
-	
-'	tempstring = createTemporaryTableAndOpen("""RessultMailsNoObj"" (ärendenr Char(14),kvFlaggorIsocken integer,NaturStatus Char(40),distrikt Char(40),anteckning Char(254),fastighet char (50),EntryId Char(150))")	
-end sub
-
-sub generateGkFasIndex
-	
-	Select EntryID,bedömning,_rowid
-	from MailsWithFaObjects,NatMedFas
-	where NatMedFas.kir = MailsWithFaObjects.fastighet
-	into GkFasIndex
-	
-End Sub
-
-sub generateÄrDisNrSwerBet
-	
-	Add Column "distriktsindelning" (antalSweref )From Fastigheter_Sweref Set To Count(*) Where within
-
-	Select EntryID,antalSweref,distrikt
-	from MailsWithFaObjects, distriktsindelning 
-	where MailsWithFaObjects.Obj Within distriktsindelning.Obj
-	group by EntryID into ÄrDisNrSwerBet 
-
-End Sub
-
-sub cleanUp
-
-	if not(debugg) then
-		close table ÄrDisNrSwerBet
-		Close Table Fastigheter_Sweref
-		close table GkFasIndex
-		close table NatMedFas
-		
-		close table distriktsindelning
-		close table FaNoSkift 
-		close table OutlookExport
-		close table RessultMailsNoObj
-		close table MailsWithFaObjects
-		close table swerefFaKorrigerad
-	end if
-end sub
-
-sub generateToExport
-
-	Select key, iif(distrikt <> "",iif(NaturStatus="",iif((kvFlaggorIsocken>10),iif(distrikt="söder",1,iif(distrikt="norra",2,(IIF(DISTRIKT="MELLERSTA",3,0)))),5),6),0) "värde" from RessultMailsNoObj into ToExport
-	Export "ToExport" Into "C:\Users\crbk01\Desktop\ToExport.csv" Type "ASCII" Delimiter "," CharSet "WindowsLatin1"	
-
-end sub
